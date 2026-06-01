@@ -57,7 +57,7 @@ Buka dua tab tersebut bersamaan saat belum ada hardware. Geser slider di **Virtu
 
 ## Visual SCARA 3D
 
-Modul Gripper memakai model SCARA 3D ringan berformat GLB. Drag pada visual untuk melihat sisi lain dan gunakan scroll untuk zoom terbatas. Flex A menggeser rack kiri-kanan dan memutar pinion, sedangkan Flex B menggerakkan jaw gripper. Bagian belakang assembly tetap terlihat tetapi tidak dianimasikan.
+Modul Gripper memakai model SCARA 3D ringan berformat GLB. Drag pada visual untuk melihat sisi lain dan gunakan scroll untuk zoom terbatas. Flex A menggeser rack kiri-kanan, memutar pinion, dan membawa carriage grip pada arah yang sama. Flex B menggerakkan jaw gripper relatif terhadap carriage. Base belakang tetap terlihat tetapi tidak dianimasikan.
 
 File Three.js disimpan lokal di repository agar halaman tidak bergantung CDN. Raw Inventor seperti `.iam`, `.ipt`, dan `.stp` tetap lokal dan tidak diunggah ke GitHub; repository hanya menyimpan `assets/models/scara-web.glb` hasil optimasi browser.
 

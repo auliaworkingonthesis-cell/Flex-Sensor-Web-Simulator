@@ -23,6 +23,11 @@ accent.diffuse_color = (0.08, 0.72, 0.78, 1)
 accent.metallic = 0.16
 accent.roughness = 0.42
 
+active = bpy.data.materials.new("SCARA Active")
+active.diffuse_color = (0.72, 0.025, 0.025, 1)
+active.metallic = 0.12
+active.roughness = 0.48
+
 servo = bpy.data.materials.new("Servo")
 servo.diffuse_color = (0.055, 0.065, 0.075, 1)
 servo.metallic = 0.08
@@ -33,10 +38,17 @@ for obj in bpy.context.scene.objects:
         continue
     obj.data.materials.clear()
     parent_name = obj.parent.name.lower() if obj.parent else ""
+    ancestry = parent_name
+    parent = obj.parent
+    while parent:
+        ancestry += " " + parent.name.lower()
+        parent = parent.parent
     if "rcxaz" in parent_name:
         obj.data.materials.append(servo)
-    elif "pignone" in parent_name or "cremagliera" in parent_name:
+    elif "cremagliera" in ancestry:
         obj.data.materials.append(accent)
+    elif any(name in ancestry for name in ("pignone", "assieme_pinza", "frame_guida", "braccio", "tappo_cremagliera")):
+        obj.data.materials.append(active)
     else:
         obj.data.materials.append(body)
 

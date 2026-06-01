@@ -27,6 +27,14 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function dominantAxis(vector) {
+  return ['x', 'y', 'z'].reduce((axis, candidate) => vector[candidate] > vector[axis] ? candidate : axis, 'x');
+}
+
+function smallestAxis(vector) {
+  return ['x', 'y', 'z'].reduce((axis, candidate) => vector[candidate] < vector[axis] ? candidate : axis, 'x');
+}
+
 function setRendererSize(renderer, camera) {
   const width = Math.max(host.clientWidth, 1);
   const height = Math.max(host.clientHeight, 1);
@@ -79,8 +87,10 @@ async function initialize() {
   const rackSize = rack ? new THREE.Box3().setFromObject(rack).getSize(new THREE.Vector3()) : new THREE.Vector3();
   const pinionSize = pinion ? new THREE.Box3().setFromObject(pinion).getSize(new THREE.Vector3()) : new THREE.Vector3();
   const jawSize = jaw ? new THREE.Box3().setFromObject(jaw).getSize(new THREE.Vector3()) : new THREE.Vector3();
-  const rackTravel = rackSize.x * 0.2;
-  const pinionPitchRadius = Math.max(pinionSize.x, pinionSize.z) * 0.5;
+  const rackAxis = dominantAxis(rackSize);
+  const pinionAxis = smallestAxis(pinionSize);
+  const rackTravel = rackSize[rackAxis] * 0.2;
+  const pinionPitchRadius = Math.max(...['x', 'y', 'z'].filter((axis) => axis !== pinionAxis).map((axis) => pinionSize[axis])) * 0.5;
   const jawTravel = jawSize.x * 0.18;
 
   const initialBox = new THREE.Box3().setFromObject(model);
@@ -105,10 +115,12 @@ async function initialize() {
   scene.add(ground);
 
   const sphere = modelBox.getBoundingSphere(new THREE.Sphere());
-  const cameraDistance = sphere.radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.18;
-  const cameraDirection = new THREE.Vector3(0, 0, 1);
-  camera.position.copy(modelCenter).add(cameraDirection.multiplyScalar(cameraDistance));
-  controls.target.copy(modelCenter);
+  const cameraDistance = sphere.radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2));
+  const cameraDirection = new THREE.Vector3(1.15, 1.16, 1.28).normalize();
+  const rackCenter = rack ? new THREE.Box3().setFromObject(rack).getCenter(new THREE.Vector3()) : modelCenter;
+  const visualFocus = modelCenter.clone().lerp(rackCenter, 0.28);
+  camera.position.copy(visualFocus).add(cameraDirection.multiplyScalar(cameraDistance));
+  controls.target.copy(visualFocus);
   controls.minDistance = cameraDistance * 0.56;
   controls.maxDistance = cameraDistance * 1.75;
   controls.update();
@@ -124,8 +136,11 @@ async function initialize() {
     getMechanics() {
       return {
         rackX: rack?.position.x,
-        pinionY: pinion?.rotation.y,
-        carriageX: carriage?.position.x,
+        rackAxis,
+        rackPosition: rack?.position[rackAxis],
+        pinionAxis,
+        pinionRotation: pinion?.rotation[pinionAxis],
+        carriagePosition: carriage?.position[rackAxis],
         jawX: jaw?.position.x,
       };
     },
@@ -147,11 +162,11 @@ async function initialize() {
     const rackPosition = requestedPose.pan / 100;
     const opening = requestedPose.grip / 100;
     const rackOffset = rackTravel * rackPosition;
-    if (rack && rackStart) rack.position.x = rackStart.x + rackOffset;
+    if (rack && rackStart) rack.position[rackAxis] = rackStart[rackAxis] + rackOffset;
     if (pinion && pinionRotationStart && pinionPitchRadius) {
-      pinion.rotation.y = pinionRotationStart.y - rackOffset / pinionPitchRadius;
+      pinion.rotation[pinionAxis] = pinionRotationStart[pinionAxis] - rackOffset / pinionPitchRadius;
     }
-    if (carriage && carriageStart) carriage.position.copy(carriageStart);
+    if (carriage && carriageStart) carriage.position[rackAxis] = carriageStart[rackAxis] + rackOffset;
     if (jaw && jawStart) jaw.position.x = jawStart.x + jawTravel * opening;
     controls.update();
     renderer.render(scene, camera);
