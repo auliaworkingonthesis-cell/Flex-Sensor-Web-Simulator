@@ -2,8 +2,6 @@
 
 Static trainer kit untuk simulasi mapping **flex sensor + ESP32 DevKit V1** ke servo, arm gripper, dan output suara laptop.
 
-Repository: https://github.com/triwahyu45/Flex-Sensor-Web-Simulator
-
 ## Halaman
 
 - `index.html` - menu utama trainer kit.
