@@ -118,6 +118,30 @@ Halaman Virtual ESP32 juga menyediakan contoh sketch Arduino ESP32 yang bisa dic
 Untuk mengurangi noise ADC dari hardware, pasang kapasitor keramik 100 nF dari masing-masing pin ADC ke GND. GPIO 34 dan 35 tetap dipakai karena keduanya berasal dari ADC1 dan aman digunakan saat Wi-Fi ESP32 aktif.
 - `phrase` -> output suara gabungan dari rule Flex A dan Flex B.
 
+## Pinout ESP32 & Skema Rangkaian
+
+Untuk menyambungkan Flex Sensor ke ESP32 DevKit V1, gunakan konfigurasi pin berikut:
+
+| Komponen | Pin ESP32 (GPIO) | Mode Pin | Deskripsi |
+| --- | --- | --- | --- |
+| **Flex Sensor A** (Servo & Rack) | **GPIO 34** (ADC1_CH6) | Analog Input | Mengukur lekukan Flex Sensor A (Kiri/Kanan) |
+| **Flex Sensor B** (Grip & Audio) | **GPIO 35** (ADC1_CH7) | Analog Input | Mengukur lekukan Flex Sensor B (Buka/Tutup) |
+
+### Skema Voltage Divider (Pembagi Tegangan)
+Flex sensor bekerja sebagai resistor variabel. Gunakan resistor statis **10kΩ** untuk membagi tegangan agar bisa dibaca oleh ADC ESP32:
+
+```text
+  3.3V ──────[ Flex Sensor ]──────┬──────[ Resistor 10kΩ ]────── GND
+                                  │
+                                  ├────── Pin ADC (GPIO 34 / 35)
+                                  │
+                             [ Kapasitor 100nF ] (Filter Noise)
+                                  │
+                                 GND
+```
+
+*Tip: Menambahkan kapasitor keramik 100nF paralel terhadap resistor 10kΩ ke GND sangat membantu meredam noise jitter pembacaan sensor.*
+
 ## Deploy GitHub Pages
 
 Karena ini static HTML/CSS/JS, GitHub Pages bisa langsung memakai root repository atau branch `main`.
