@@ -1,6 +1,7 @@
 # Flex Sensor Web Simulator
 
-Live Web Simulator: [https://auliaworkingonthesis-cell.github.io/Flex-Sensor-Web-Simulator/](https://auliaworkingonthesis-cell.github.io/Flex-Sensor-Web-Simulator/)
+- **Main Web Simulator**: [https://auliaworkingonthesis-cell.github.io/Flex-Sensor-Web-Simulator/](https://auliaworkingonthesis-cell.github.io/Flex-Sensor-Web-Simulator/)
+- **Virtual ESP32 Simulator**: [https://auliaworkingonthesis-cell.github.io/Flex-Sensor-Web-Simulator/virtual-esp32.html](https://auliaworkingonthesis-cell.github.io/Flex-Sensor-Web-Simulator/virtual-esp32.html)
 
 Static trainer kit untuk simulasi mapping **flex sensor + ESP32 DevKit V1** ke servo, arm gripper, dan output suara laptop.
 
