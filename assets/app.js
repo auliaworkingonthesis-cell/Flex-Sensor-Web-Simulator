@@ -2,6 +2,7 @@ const CHANNEL_NAME = 'flex-trainer-realtime';
 const STORAGE_KEY = 'flex-trainer-payload';
 const DEVICE_KEY = 'flex-trainer-mdns';
 const SETTINGS_KEY = 'flex-trainer-settings';
+const MODULE_KEY  = 'flex-trainer-modules';
 
 const defaults = {
   flexA: 2048,
@@ -127,6 +128,18 @@ function saveSettings(settings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
+function loadModuleStates() {
+  try {
+    return JSON.parse(localStorage.getItem(MODULE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveModuleStates(states) {
+  localStorage.setItem(MODULE_KEY, JSON.stringify(states));
+}
+
 function phraseFromRules(value, rules) {
   const rule = rules.find((item) => value >= numeric(item.min) && value <= numeric(item.max));
   return rule?.text || '';
@@ -227,6 +240,13 @@ function initSimulator() {
   };
 
   const settings = loadSettings();
+
+  // Restore saved toggle states before reading .checked
+  const savedModules = loadModuleStates();
+  if ('servo'      in savedModules) refs.servoToggle.checked      = savedModules.servo;
+  if ('gripper'    in savedModules) refs.gripperToggle.checked    = savedModules.gripper;
+  if ('graphAudio' in savedModules) refs.graphAudioToggle.checked = savedModules.graphAudio;
+
   const modules = {
     servo: refs.servoToggle.checked,
     gripper: refs.gripperToggle.checked,
@@ -411,7 +431,8 @@ function initSimulator() {
   }
 
   createChannel((payload) => {
-    if (!espPolling && !serialActive) acceptPayload(payload, 'Virtual data');
+    // Accept virtual data when: not using serial AND (not polling real ESP32, OR real ESP32 isn't responding)
+    if (!serialActive && (!espPolling || pollFailures > 0)) acceptPayload(payload, 'Virtual ESP32');
   });
 
   function setConnectionStatus(text, state = 'red') {
@@ -574,7 +595,14 @@ function initSimulator() {
   }
 
   [refs.servoToggle, refs.gripperToggle, refs.graphAudioToggle].forEach((toggle) => {
-    toggle.addEventListener('change', syncModuleState);
+    toggle.addEventListener('change', () => {
+      syncModuleState();
+      saveModuleStates({
+        servo:      refs.servoToggle.checked,
+        gripper:    refs.gripperToggle.checked,
+        graphAudio: refs.graphAudioToggle.checked,
+      });
+    });
   });
   syncModuleState();
 
