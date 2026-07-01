@@ -152,10 +152,10 @@ Sensor yang dikontrol LED bisa dipilih di `main.cpp`:
 
 ### Skema Voltage Divider (Pembagi Tegangan)
 
-Flex sensor bekerja sebagai resistor variabel (~16.6kΩ lurus, ~20kΩ bengkok). Gunakan resistor **18kΩ** untuk mendapatkan range ADC yang optimal:
+Flex sensor bekerja sebagai resistor variabel (~16.6kΩ lurus, ~20kΩ bengkok). Gunakan resistor **10kΩ** untuk mendapatkan range ADC yang optimal dari komponen yang dimiliki:
 
 ```text
-  3.3V ──────[ Flex Sensor 16.6k–20kΩ ]──────┬──────[ Resistor 18kΩ ]────── GND
+  3.3V ──────[ Flex Sensor 16.6k–20kΩ ]──────┬──────[ Resistor 10kΩ ]────── GND
                                               │
                                     GPIO ADC (34 / 35)
                                               │
@@ -164,9 +164,9 @@ Flex sensor bekerja sebagai resistor variabel (~16.6kΩ lurus, ~20kΩ bengkok). 
 
 | Kondisi Flex | Rflex | Vout | ADC (12-bit) |
 |---|---|---|---|
-| Lurus | ~16.6kΩ | ~1.72V | ~2130 |
-| ~90° bengkok | ~18.3kΩ | ~1.63V | ~2035 |
-| Bengkok penuh | ~20kΩ | ~1.56V | ~1940 |
+| Lurus | ~16.6kΩ | ~1.24V | ~1539 |
+| ~90° bengkok | ~18.3kΩ | ~1.17V | ~1450 |
+| Bengkok penuh | ~20kΩ | ~1.10V | ~1365 |
 
 > **Tip kalibrasi**: Setelah upload firmware, buka Serial Monitor (115200 baud) dan baca nilai `FlexA:xxxx` dan `FlexB:xxxx` saat sensor lurus dan bengkok penuh. Masukkan nilai tersebut ke `FLEX_A_MIN`, `FLEX_A_MAX`, `FLEX_B_MIN`, `FLEX_B_MAX` di bagian `#define` paling atas `main.cpp`.
 

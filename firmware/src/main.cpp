@@ -19,7 +19,7 @@
  *  │
  *  ├── GPIO ADC pin     ← ADC ~2130 (lurus) .. ~1940 (melengkung)
  *  │                       (makin bengkok = Rflex naik = ADC TURUN)
- *  [R2 = 18kΩ]  ← R_optimal = sqrt(16600*20000) ≈ 18.2kΩ
+ *  [R2 = 10kΩ]  ← Menggunakan resistor 10kΩ (Coklat Hitam Orange Emas)
  *  │
  *  └── GND
  *
@@ -48,17 +48,17 @@
 // ── Flex Sensor A (Servo & Rack pan) — ADC range ─────────────────────────────
 // CATATAN: Rflex naik saat bengkok → Vout TURUN → ADC TURUN
 // Sehingga: MIN = ADC saat melengkung (bengkok penuh), MAX = ADC saat lurus
-// Dengan R2=18kΩ dan Rflex 16.6k–20k:
-//   Lurus   : ADC ≈ 2130  (Rflex=16.6kΩ, Vout=1.72V)
-//   Bengkok : ADC ≈ 1940  (Rflex=20kΩ,   Vout=1.56V)
+// Dengan R2=10kΩ dan Rflex 16.6k–20k:
+//   Lurus   : ADC ≈ 1539  (Rflex=16.6kΩ, Vout=1.24V)
+//   Bengkok : ADC ≈ 1365  (Rflex=20kΩ,   Vout=1.10V)
 // → map(flexA, FLEX_A_MIN, FLEX_A_MAX, ...) = 0 saat lurus, 100 saat bengkok
-#define FLEX_A_MIN       2130  // ADC saat sensor LURUS  (Rflex=16.6kΩ, Vout max)
-#define FLEX_A_MAX       1940  // ADC saat sensor BENGKOK (Rflex=20kΩ, Vout min)
+#define FLEX_A_MIN       1539  // ADC saat sensor LURUS  (Rflex=16.6kΩ, Vout max)
+#define FLEX_A_MAX       1365  // ADC saat sensor BENGKOK (Rflex=20kΩ, Vout min)
 // Tip: Baca nilai Serial Monitor "FlexA:xxxx" untuk kalibrasi aktual
 
 // ── Flex Sensor B (Grip & Audio) — ADC range ─────────────────────────────────
-#define FLEX_B_MIN       2130  // ADC saat sensor LURUS
-#define FLEX_B_MAX       1940  // ADC saat sensor BENGKOK
+#define FLEX_B_MIN       1539  // ADC saat sensor LURUS
+#define FLEX_B_MAX       1365  // ADC saat sensor BENGKOK
 
 // ── Servo Angle Range ─────────────────────────────────────────────────────────
 #define SERVO_ANGLE_MIN  0     // Sudut minimum servo (derajat)
@@ -77,12 +77,12 @@
 // LED Hijau  : ADC >= RGB_GREEN_THRESHOLD  (sensor hampir lurus)
 // LED Kuning : RGB_YELLOW_THRESHOLD <= ADC < RGB_GREEN_THRESHOLD  (~90 derajat)
 // LED Merah  : ADC < RGB_YELLOW_THRESHOLD  (melengkung penuh)
-// Dengan range ~1940–2130, bagi 3 zona:
-//   Hijau  : ADC >= 2070  (0–33% bengkok)
-//   Kuning : 2000 <= ADC < 2070  (33–66% bengkok)
-//   Merah  : ADC < 2000   (66–100% bengkok)
-#define RGB_GREEN_THRESHOLD   2070   // Batas atas zona hijau (ADC naik = lurus)
-#define RGB_YELLOW_THRESHOLD  2000   // Batas atas zona kuning
+// Dengan range ~1365–1539, bagi 3 zona:
+//   Hijau  : ADC >= 1480  (0–33% bengkok)
+//   Kuning : 1420 <= ADC < 1480  (33–66% bengkok)
+//   Merah  : ADC < 1420   (66–100% bengkok)
+#define RGB_GREEN_THRESHOLD   1480   // Batas atas zona hijau (ADC naik = lurus)
+#define RGB_YELLOW_THRESHOLD  1420   // Batas atas zona kuning
 
 // ── Sampling ──────────────────────────────────────────────────────────────────
 #define SAMPLE_COUNT          20     // Jumlah sampel moving average
