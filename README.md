@@ -164,9 +164,9 @@ Flex sensor bekerja sebagai resistor variabel (~16.6kΩ lurus, ~20kΩ bengkok). 
 
 | Kondisi Flex | Rflex | Vout | ADC (12-bit) |
 |---|---|---|---|
-| Lurus | ~16.6kΩ | ~1.24V | ~1539 |
-| ~90° bengkok | ~18.3kΩ | ~1.17V | ~1450 |
-| Bengkok penuh | ~20kΩ | ~1.10V | ~1365 |
+| Lurus | ~16.6kΩ | ~1.24V | **1320** |
+| ~90° bengkok | ~18.3kΩ | ~1.17V | **1240** |
+| Bengkok penuh | ~20kΩ | ~1.10V | **1198** |
 
 > **Tip kalibrasi**: Setelah upload firmware, buka Serial Monitor (115200 baud) dan baca nilai `FlexA:xxxx` dan `FlexB:xxxx` saat sensor lurus dan bengkok penuh. Masukkan nilai tersebut ke `FLEX_A_MIN`, `FLEX_A_MAX`, `FLEX_B_MIN`, `FLEX_B_MAX` di bagian `#define` paling atas `main.cpp`.
 
