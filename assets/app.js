@@ -166,7 +166,7 @@ function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
       0, 100, 100, -100,  // Reversed: flex bengkok → rack ke arah yang benar
     ), 1),
     servo: round(mapCalibrationZones(servoInput, settings.servo.zones, () => mapCalibrationPoints(servoInput, settings.servo.points, () => mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax))), 1),
-    grip: round(mapCalibrationZones(gripInput, settings.gripper.gripZones, () => mapCalibrationPoints(gripInput, settings.gripper.gripPoints, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100))), 1),
+    grip: round(mapCalibrationZones(gripInput, settings.gripper.gripZones, () => mapCalibrationPoints(gripInput, settings.gripper.gripPoints, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 100, 0))), 1),  // Reversed
     phrase: phraseFromFlexes(flex.flexA, flex.flexB, settings),
     mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
