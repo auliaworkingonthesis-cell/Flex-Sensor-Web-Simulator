@@ -41,8 +41,8 @@
 #define FLEX_B_PIN       35    // ADC1_CH7 — Flex Sensor B (Grip & Audio)
 #define SERVO_PIN        18    // PWM output untuk servo motor
 #define LED_RED_PIN      25    // RGB LED — pin Merah
-#define LED_GREEN_PIN    26    // RGB LED — pin Hijau
-#define LED_BLUE_PIN     27    // RGB LED — pin Biru
+#define LED_GREEN_PIN    27    // RGB LED — pin Hijau (Tukar ke 27)
+#define LED_BLUE_PIN     26    // RGB LED — pin Biru  (Tukar ke 26)
 // LCD I2C: SDA = GPIO 21, SCL = GPIO 22 (default Arduino ESP32)
 
 // ── Flex Sensor A (Servo & Rack pan) — ADC range ─────────────────────────────

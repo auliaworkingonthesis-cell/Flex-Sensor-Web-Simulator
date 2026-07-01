@@ -130,8 +130,8 @@ Program firmware PlatformIO tersedia di folder [`firmware/`](firmware/) — buka
 | 2 | **Flex Sensor B** | **GPIO 35** (ADC1_CH7) | Analog Input | Lekukan → Gripper buka/tutup & Audio |
 | 3 | **Servo Motor** | **GPIO 18** | PWM Output | Sudut servo 0–180° dikontrol Flex A |
 | 4 | **RGB LED — Merah** | **GPIO 25** | Digital Output | Pin R dari LED RGB 3-pin |
-| 5 | **RGB LED — Hijau** | **GPIO 26** | Digital Output | Pin G dari LED RGB 3-pin |
-| 6 | **RGB LED — Biru** | **GPIO 27** | Digital Output | Pin B dari LED RGB 3-pin |
+| 5 | **RGB LED — Hijau** | **GPIO 27** | Digital Output | Pin G dari LED RGB 3-pin |
+| 6 | **RGB LED — Biru** | **GPIO 26** | Digital Output | Pin B dari LED RGB 3-pin |
 | 7 | **LCD 16x4 — SDA** | **GPIO 21** | I2C Data | SDA default I2C ESP32 Arduino |
 | 8 | **LCD 16x4 — SCL** | **GPIO 22** | I2C Clock | SCL default I2C ESP32 Arduino |
 
