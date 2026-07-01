@@ -134,7 +134,9 @@ bool mdnsStarted   = false;
 
 /** Clamp + map integer value from one range to another */
 int mapClamped(int val, int inMin, int inMax, int outMin, int outMax) {
-    val = constrain(val, inMin, inMax);
+    int low = min(inMin, inMax);
+    int high = max(inMin, inMax);
+    val = constrain(val, low, high);
     return map(val, inMin, inMax, outMin, outMax);
 }
 
