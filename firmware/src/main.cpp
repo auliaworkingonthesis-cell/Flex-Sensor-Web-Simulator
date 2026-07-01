@@ -65,11 +65,19 @@
 #define SERVO_ANGLE_MIN  0     // Sudut minimum servo (derajat)
 #define SERVO_ANGLE_MAX  180   // Sudut maksimum servo (derajat)
 
-// ── RGB LED Threshold (berdasarkan ADC Flex A) ───────────────────────────────
+// ── RGB LED — pilih sensor yang dikontrol LED ────────────────────────────────
+// Ganti nilai di bawah sesuai kebutuhan:
+//   LED_SOURCE_FLEX_A  → LED mengikuti Flex A (servo & rack)
+//   LED_SOURCE_FLEX_B  → LED mengikuti Flex B (grip & audio)
+#define LED_SOURCE_FLEX_A  0
+#define LED_SOURCE_FLEX_B  1
+#define LED_FOLLOWS        LED_SOURCE_FLEX_A   // ← GANTI DI SINI
+
+// ── RGB LED Threshold (berlaku untuk sensor yang dipilih di LED_FOLLOWS) ──────
 // INGAT: ADC TURUN saat semakin bengkok!
 // LED Hijau  : ADC >= RGB_GREEN_THRESHOLD  (sensor hampir lurus)
-// LED Kuning : ADC antara RGB_RED_THRESHOLD dan RGB_GREEN_THRESHOLD (bengkok sedang ~90°)
-// LED Merah  : ADC < RGB_RED_THRESHOLD     (sensor melengkung penuh)
+// LED Kuning : RGB_YELLOW_THRESHOLD <= ADC < RGB_GREEN_THRESHOLD  (~90 derajat)
+// LED Merah  : ADC < RGB_YELLOW_THRESHOLD  (melengkung penuh)
 // Dengan range ~1940–2130, bagi 3 zona:
 //   Hijau  : ADC >= 2070  (0–33% bengkok)
 //   Kuning : 2000 <= ADC < 2070  (33–66% bengkok)
@@ -163,16 +171,23 @@ void setLed(bool r, bool g, bool b) {
     digitalWrite(LED_BLUE_PIN,  b ? HIGH : LOW);
 }
 
-/** Perbarui warna LED berdasarkan nilai ADC Flex A
+/** Perbarui warna LED berdasarkan nilai ADC Flex A atau Flex B
+ *  (pilih via #define LED_FOLLOWS di bagian konfigurasi atas)
  *  Ingat: ADC TURUN saat makin bengkok
  *  Hijau  : ADC >= RGB_GREEN_THRESHOLD  (hampir lurus)
  *  Kuning : RGB_YELLOW_THRESHOLD <= ADC < RGB_GREEN_THRESHOLD  (~90 derajat)
  *  Merah  : ADC < RGB_YELLOW_THRESHOLD  (melengkung penuh)
  */
 void updateLed() {
-    if (flexA >= RGB_GREEN_THRESHOLD) {
+#if LED_FOLLOWS == LED_SOURCE_FLEX_B
+    int ledAdc = flexB;   // LED mengikuti Flex B
+#else
+    int ledAdc = flexA;   // LED mengikuti Flex A (default)
+#endif
+
+    if (ledAdc >= RGB_GREEN_THRESHOLD) {
         setLed(false, true, false);   // HIJAU  — posisi awal / lurus
-    } else if (flexA >= RGB_YELLOW_THRESHOLD) {
+    } else if (ledAdc >= RGB_YELLOW_THRESHOLD) {
         setLed(true, true, false);    // KUNING — melengkung sedang (~90°)
     } else {
         setLed(true, false, false);   // MERAH  — melengkung penuh
