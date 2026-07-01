@@ -16,31 +16,31 @@ const defaults = {
 };
 
 const defaultSettings = {
-  servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180, points: [], zones: [] },
+  servo: { source: 'flexA', inMin: 1320, inMax: 1198, outMin: 0, outMax: 180, points: [], zones: [] },
   gripper: {
     armSource: 'flexA',
-    armInMin: 0,
-    armInMax: 4095,
+    armInMin: 1320,
+    armInMax: 1198,
     armPoints: [],
     armZones: [],
     gripSource: 'flexB',
-    gripInMin: 0,
-    gripInMax: 4095,
+    gripInMin: 1320,
+    gripInMax: 1198,
     gripPoints: [],
     gripZones: [],
   },
   audio: {
-    graphMin: 0,
-    graphMax: 4095,
+    graphMin: 1198,
+    graphMax: 1320,
     flexARules: [
-      { min: 0, max: 1364, text: 'Halo' },
-      { min: 1365, max: 2729, text: 'Apa kabar' },
-      { min: 2730, max: 4095, text: 'Semangat' },
+      { min: 1198, max: 1238, text: 'Halo' },
+      { min: 1239, max: 1279, text: 'Apa kabar' },
+      { min: 1280, max: 1320, text: 'Semangat' },
     ],
     flexBRules: [
-      { min: 0, max: 1364, text: 'Aulia' },
-      { min: 1365, max: 2729, text: 'Siap' },
-      { min: 2730, max: 4095, text: 'Mantap' },
+      { min: 1198, max: 1238, text: 'Aulia' },
+      { min: 1239, max: 1279, text: 'Siap' },
+      { min: 1280, max: 1320, text: 'Mantap' },
     ],
   },
 };
@@ -98,6 +98,29 @@ function normalizeMdns(value) {
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+    
+    // Auto-migrate old defaults (0 to 4095) to new hardware defaults (1320 to 1198)
+    if (saved.servo && (saved.servo.inMin === 0 && saved.servo.inMax === 4095)) {
+      saved.servo.inMin = 1320;
+      saved.servo.inMax = 1198;
+    }
+    if (saved.gripper) {
+      if (saved.gripper.armInMin === 0 && saved.gripper.armInMax === 4095) {
+        saved.gripper.armInMin = 1320;
+        saved.gripper.armInMax = 1198;
+      }
+      if (saved.gripper.gripInMin === 0 && saved.gripper.gripInMax === 4095) {
+        saved.gripper.gripInMin = 1320;
+        saved.gripper.gripInMax = 1198;
+      }
+    }
+    if (saved.audio && (saved.audio.graphMin === 0 && saved.audio.graphMax === 4095)) {
+      saved.audio.graphMin = 1198;
+      saved.audio.graphMax = 1320;
+      saved.audio.flexARules = defaultSettings.audio.flexARules;
+      saved.audio.flexBRules = defaultSettings.audio.flexBRules;
+    }
+
     const legacyRules = saved.audio?.rules;
     const audio = {
       ...defaultSettings.audio,
