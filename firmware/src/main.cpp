@@ -87,7 +87,8 @@
 // ── Sampling ──────────────────────────────────────────────────────────────────
 #define SAMPLE_COUNT          20     // Jumlah sampel moving average
 #define SENSOR_INTERVAL_MS    5      // Interval baca sensor (ms)
-#define SERIAL_INTERVAL_MS    50     // Interval print serial (ms)
+#define SERIAL_INTERVAL_MS    50     // Interval print serial human-readable (ms)
+#define SERIAL_JSON_INTERVAL_MS 20   // Interval output JSON ke Web Serial API (ms)
 #define LCD_INTERVAL_MS       100    // Interval update LCD (ms)
 #define WIFI_RETRY_MS         5000   // Interval retry Wi-Fi (ms)
 
@@ -119,6 +120,7 @@ int   flexB        = 0;    // hasil rata-rata Flex B
 // ── Timestamps (non-blocking) ─────────────────────────────────────────────────
 unsigned long lastSensorRead  = 0;
 unsigned long lastSerial      = 0;
+unsigned long lastSerialJson  = 0;
 unsigned long lastLcd         = 0;
 unsigned long lastWifiRetry   = 0;
 
@@ -367,13 +369,27 @@ void loop() {
         updateLed();
     }
 
-    // ── Serial print (setiap 50 ms) ───────────────────────────────────────────
+    // ── Serial human-readable (setiap 50 ms) ─────────────────────────────────
     if (now - lastSerial >= SERIAL_INTERVAL_MS) {
         lastSerial = now;
         int angle = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
         Serial.print("FlexA:"); Serial.print(flexA);
         Serial.print(" FlexB:"); Serial.print(flexB);
         Serial.print(" Angle:"); Serial.println(angle);
+    }
+
+    // ── Serial JSON untuk Web Serial API (setiap 20 ms) ──────────────────────
+    // Format: DATA:{...}\n  → dibaca langsung oleh browser via Web Serial API
+    if (now - lastSerialJson >= SERIAL_JSON_INTERVAL_MS) {
+        lastSerialJson = now;
+        int   angle   = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
+        int   panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, 100, -100);  // Reversed
+        int   gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 100, 0);     // Reversed
+        char  json[128];
+        snprintf(json, sizeof(json),
+            "DATA:{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d,\"phrase\":\"\"}",
+            flexA, flexB, panPct, (float)angle, gripPct);
+        Serial.println(json);
     }
 
     // ── Update LCD (setiap 100 ms) ────────────────────────────────────────────

@@ -459,6 +459,19 @@ function initSimulator() {
   }
 
   function acceptSerialLine(line) {
+    // Format baru: DATA:{...} — JSON lengkap dari firmware (pan/grip sudah dihitung)
+    const dataMatch = line.match(/^DATA:(\{.+\})$/);
+    if (dataMatch) {
+      try {
+        const data = JSON.parse(dataMatch[1]);
+        if (typeof data.flexA === 'number' && typeof data.flexB === 'number') {
+          acceptPayload({ flexA: data.flexA, flexB: data.flexB }, 'Serial ESP32');
+          setConnectionStatus('Connected: Serial ESP32', 'green');
+        }
+      } catch {}
+      return;
+    }
+    // Format lama: "FlexA:xxx FlexB:xxx" — tetap didukung untuk kompatibilitas
     const match = line.match(/FlexA:\s*(\d+)\s+FlexB:\s*(\d+)/i)
       || line.match(/Flex A:\s*(\d+)\s*\|\s*Flex B:\s*(\d+)/i);
     if (!match) return;
