@@ -40,9 +40,9 @@
 #define FLEX_A_PIN       34    // ADC1_CH6 — Flex Sensor A (Servo & Rack)
 #define FLEX_B_PIN       35    // ADC1_CH7 — Flex Sensor B (Grip & Audio)
 #define SERVO_PIN        18    // PWM output untuk servo motor
-#define LED_RED_PIN      25    // RGB LED — pin Merah
-#define LED_GREEN_PIN    27    // RGB LED — pin Hijau (Tukar ke 27)
-#define LED_BLUE_PIN     26    // RGB LED — pin Biru  (Tukar ke 26)
+#define LED_RED_PIN      25    // LED Merah  — GPIO 25
+#define LED_YELLOW_PIN   26    // LED Kuning — GPIO 26
+#define LED_GREEN_PIN    27    // LED Hijau  — GPIO 27
 // LCD I2C: SDA = GPIO 21, SCL = GPIO 22 (default Arduino ESP32)
 
 // ── Flex Sensor A (Servo & Rack pan) — ADC range ─────────────────────────────
@@ -164,12 +164,12 @@ void updateFlexReadings() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  RGB LED
+//  LEDS (Red, Yellow, Green — Separate pins)
 // ─────────────────────────────────────────────────────────────────────────────
-void setLed(bool r, bool g, bool b) {
-    digitalWrite(LED_RED_PIN,   r ? HIGH : LOW);
-    digitalWrite(LED_GREEN_PIN, g ? HIGH : LOW);
-    digitalWrite(LED_BLUE_PIN,  b ? HIGH : LOW);
+void setLed(bool r, bool y, bool g) {
+    digitalWrite(LED_RED_PIN,    r ? HIGH : LOW);
+    digitalWrite(LED_YELLOW_PIN, y ? HIGH : LOW);
+    digitalWrite(LED_GREEN_PIN,  g ? HIGH : LOW);
 }
 
 /** Perbarui warna LED berdasarkan nilai ADC Flex A atau Flex B
@@ -187,11 +187,11 @@ void updateLed() {
 #endif
 
     if (ledAdc >= RGB_GREEN_THRESHOLD) {
-        setLed(false, true, false);   // HIJAU  — posisi awal / lurus
+        setLed(false, false, true);   // HIJAU  — lurus
     } else if (ledAdc >= RGB_YELLOW_THRESHOLD) {
-        setLed(true, true, false);    // KUNING — melengkung sedang (~90°)
+        setLed(false, true, false);   // KUNING — bengkok ~90° (nyalakan pin kuning saja)
     } else {
-        setLed(true, false, false);   // MERAH  — melengkung penuh
+        setLed(true, false, false);   // MERAH  — bengkok penuh
     }
 }
 
@@ -325,11 +325,11 @@ void setup() {
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
 
-    // ── RGB LED pins ──────────────────────────────────────────────────────────
-    pinMode(LED_RED_PIN,   OUTPUT);
-    pinMode(LED_GREEN_PIN, OUTPUT);
-    pinMode(LED_BLUE_PIN,  OUTPUT);
-    setLed(false, true, false);   // Default: hijau = posisi awal
+    // ── LED pins ─────────────────────────────────────────────────────────────
+    pinMode(LED_RED_PIN,    OUTPUT);
+    pinMode(LED_YELLOW_PIN, OUTPUT);
+    pinMode(LED_GREEN_PIN,  OUTPUT);
+    setLed(false, false, true);   // Default: hijau = posisi awal (lurus)
 
     // ── Servo ─────────────────────────────────────────────────────────────────
     myServo.attach(SERVO_PIN);

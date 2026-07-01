@@ -129,15 +129,15 @@ Program firmware PlatformIO tersedia di folder [`firmware/`](firmware/) — buka
 | 1 | **Flex Sensor A** | **GPIO 34** (ADC1_CH6) | Analog Input | Lekukan → Servo & Rack pan kiri/kanan |
 | 2 | **Flex Sensor B** | **GPIO 35** (ADC1_CH7) | Analog Input | Lekukan → Gripper buka/tutup & Audio |
 | 3 | **Servo Motor** | **GPIO 18** | PWM Output | Sudut servo 0–180° dikontrol Flex A |
-| 4 | **RGB LED — Merah** | **GPIO 25** | Digital Output | Pin R dari LED RGB 3-pin |
-| 5 | **RGB LED — Hijau** | **GPIO 27** | Digital Output | Pin G dari LED RGB 3-pin |
-| 6 | **RGB LED — Biru** | **GPIO 26** | Digital Output | Pin B dari LED RGB 3-pin |
+| 4 | **LED Merah** | **GPIO 25** | Digital Output | LED indikator kondisi bengkok penuh |
+| 5 | **LED Kuning** | **GPIO 26** | Digital Output | LED indikator kondisi bengkok sedang |
+| 6 | **LED Hijau** | **GPIO 27** | Digital Output | LED indikator kondisi lurus/awal |
 | 7 | **LCD 16x4 — SDA** | **GPIO 21** | I2C Data | SDA default I2C ESP32 Arduino |
 | 8 | **LCD 16x4 — SCL** | **GPIO 22** | I2C Clock | SCL default I2C ESP32 Arduino |
 
 > **Catatan GPIO 34 & 35**: Kedua pin ini **input-only** (tidak ada pull-up internal) dan berasal dari ADC1, sehingga aman digunakan bersamaan dengan Wi-Fi ESP32.
 
-### LED RGB — Logika Warna (3 pin terpisah: R, G, B)
+### Indikator LED — Logika Kondisi (3 LED terpisah)
 
 | Warna LED | Kondisi Flex | Keterangan |
 |-----------|-------------|------------|
