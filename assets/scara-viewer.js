@@ -227,7 +227,7 @@ async function initialize() {
 
   function animate() {
     if (host.hidden) return;
-    const rackPosition = requestedPose.pan  / 100;
+    const rackPosition = -(requestedPose.pan  / 100);  // Negated to reverse left/right direction
     const opening      = requestedPose.grip / 100;
     const rackOffset   = rackTravel * rackPosition;
 
