@@ -202,9 +202,22 @@ void updateLed() {
 // ─────────────────────────────────────────────────────────────────────────────
 int lastServoAngle = -1;
 
+/** Hitung sudut servo secara piecewise-linear agar:
+ *  1320 (Lurus)       → 0 derajat
+ *  1240 (90 derajat)  → 90 derajat
+ *  1198 (Bengkok maks)→ 180 derajat
+ */
+int getServoAngle(int adcVal) {
+    if (adcVal >= 1240) {
+        return mapClamped(adcVal, 1320, 1240, 0, 90);
+    } else {
+        return mapClamped(adcVal, 1240, 1198, 90, 180);
+    }
+}
+
 /** Perbarui posisi servo berdasarkan Flex A */
 void updateServo() {
-    int angle = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
+    int angle = getServoAngle(flexA);
     if (angle != lastServoAngle) {
         myServo.write(angle);
         lastServoAngle = angle;
@@ -248,7 +261,7 @@ void updateLcd() {
     lcd.print("     ");
 
     // ── Baris 2: Servo Angle ─────────────────────────────────────────────────
-    int angle = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
+    int angle = getServoAngle(flexA);
     lcd.setCursor(0, 2);
     lcd.print("Angle :");
     lcdPrintInt(7, 2, angle, 3);
@@ -280,7 +293,7 @@ void handleData() {
     sendCors();
     int panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, -100, 100);
     int gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 0, 100);
-    int angle   = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
+    int angle   = getServoAngle(flexA);
 
     char json[256];
     snprintf(json, sizeof(json),
@@ -374,7 +387,7 @@ void loop() {
     // ── Serial human-readable (setiap 50 ms) ─────────────────────────────────
     if (now - lastSerial >= SERIAL_INTERVAL_MS) {
         lastSerial = now;
-        int angle = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
+        int angle = getServoAngle(flexA);
         Serial.print("FlexA:"); Serial.print(flexA);
         Serial.print(" FlexB:"); Serial.print(flexB);
         Serial.print(" Angle:"); Serial.println(angle);
@@ -384,7 +397,7 @@ void loop() {
     // Format: DATA:{...}\n  → dibaca langsung oleh browser via Web Serial API
     if (now - lastSerialJson >= SERIAL_JSON_INTERVAL_MS) {
         lastSerialJson = now;
-        int   angle   = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, SERVO_ANGLE_MIN, SERVO_ANGLE_MAX);
+        int   angle   = getServoAngle(flexA);
         int   panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, 100, -100);  // Reversed
         int   gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 100, 0);     // Reversed
         char  json[128];
