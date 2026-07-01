@@ -141,9 +141,9 @@ Program firmware PlatformIO tersedia di folder [`firmware/`](firmware/) — buka
 
 | Warna LED | Kondisi Flex | Keterangan |
 |-----------|-------------|------------|
-| 🟢 **Hijau** | Sensor lurus (posisi awal) | ADC >= threshold hijau |
-| 🟡 **Kuning** | Melengkung ~90° | ADC di zona tengah |
-| 🔴 **Merah** | Melengkung penuh | ADC <= threshold merah |
+| 🟢 **Hijau** | Sensor lurus (posisi awal) | `ADC >= 1260` |
+| 🟡 **Kuning** | Melengkung ~90° | `1210 <= ADC < 1260` |
+| 🔴 **Merah** | Melengkung penuh | `ADC < 1210` |
 
 Sensor yang dikontrol LED bisa dipilih di `main.cpp`:
 ```cpp

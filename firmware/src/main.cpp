@@ -78,11 +78,11 @@
 // LED Kuning : RGB_YELLOW_THRESHOLD <= ADC < RGB_GREEN_THRESHOLD  (~90 derajat)
 // LED Merah  : ADC < RGB_YELLOW_THRESHOLD  (melengkung penuh)
 // Dengan range aktual ~1198–1320, bagi 3 zona:
-//   Hijau  : ADC >= 1280  (0–33% bengkok)
-//   Kuning : 1220 <= ADC < 1280  (33–66% bengkok)
-//   Merah  : ADC < 1220   (66–100% bengkok)
-#define RGB_GREEN_THRESHOLD   1280   // Batas atas zona hijau (ADC naik = lurus)
-#define RGB_YELLOW_THRESHOLD  1220   // Batas atas zona kuning
+//   Hijau  : ADC >= 1260  (0–50% bengkok, memberi buffer lebih besar agar lurus tetap hijau)
+//   Kuning : 1210 <= ADC < 1260  (50–90% bengkok, berpusat di sekitar 1240)
+//   Merah  : ADC < 1210   (bengkok penuh mendekati 1198)
+#define RGB_GREEN_THRESHOLD   1260   // Batas atas zona hijau (ADC naik = lurus)
+#define RGB_YELLOW_THRESHOLD  1210   // Batas atas zona kuning
 
 // ── Sampling ──────────────────────────────────────────────────────────────────
 #define SAMPLE_COUNT          20     // Jumlah sampel moving average
