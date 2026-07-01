@@ -120,27 +120,57 @@ Untuk mengurangi noise ADC dari hardware, pasang kapasitor keramik 100 nF dari m
 
 ## Pinout ESP32 & Skema Rangkaian
 
-Untuk menyambungkan Flex Sensor ke ESP32 DevKit V1, gunakan konfigurasi pin berikut:
+Program firmware PlatformIO tersedia di folder [`firmware/`](firmware/) — buka folder tersebut di VS Code dengan ekstensi PlatformIO untuk build dan upload.
 
-| Komponen | Pin ESP32 (GPIO) | Mode Pin | Deskripsi |
-| --- | --- | --- | --- |
-| **Flex Sensor A** (Servo & Rack) | **GPIO 34** (ADC1_CH6) | Analog Input | Mengukur lekukan Flex Sensor A (Kiri/Kanan) |
-| **Flex Sensor B** (Grip & Audio) | **GPIO 35** (ADC1_CH7) | Analog Input | Mengukur lekukan Flex Sensor B (Buka/Tutup) |
+### Tabel Pin ESP32 DevKit V1
 
-### Skema Voltage Divider (Pembagi Tegangan)
-Flex sensor bekerja sebagai resistor variabel. Gunakan resistor statis **10kΩ** untuk membagi tegangan agar bisa dibaca oleh ADC ESP32:
+| No | Komponen | GPIO | Mode | Keterangan |
+|----|----------|------|------|------------|
+| 1 | **Flex Sensor A** | **GPIO 34** (ADC1_CH6) | Analog Input | Lekukan → Servo & Rack pan kiri/kanan |
+| 2 | **Flex Sensor B** | **GPIO 35** (ADC1_CH7) | Analog Input | Lekukan → Gripper buka/tutup & Audio |
+| 3 | **Servo Motor** | **GPIO 18** | PWM Output | Sudut servo 0–180° dikontrol Flex A |
+| 4 | **RGB LED — Merah** | **GPIO 25** | Digital Output | Pin R dari LED RGB 3-pin |
+| 5 | **RGB LED — Hijau** | **GPIO 26** | Digital Output | Pin G dari LED RGB 3-pin |
+| 6 | **RGB LED — Biru** | **GPIO 27** | Digital Output | Pin B dari LED RGB 3-pin |
+| 7 | **LCD 16x4 — SDA** | **GPIO 21** | I2C Data | SDA default I2C ESP32 Arduino |
+| 8 | **LCD 16x4 — SCL** | **GPIO 22** | I2C Clock | SCL default I2C ESP32 Arduino |
 
-```text
-  3.3V ──────[ Flex Sensor ]──────┬──────[ Resistor 10kΩ ]────── GND
-                                  │
-                                  ├────── Pin ADC (GPIO 34 / 35)
-                                  │
-                             [ Kapasitor 100nF ] (Filter Noise)
-                                  │
-                                 GND
+> **Catatan GPIO 34 & 35**: Kedua pin ini **input-only** (tidak ada pull-up internal) dan berasal dari ADC1, sehingga aman digunakan bersamaan dengan Wi-Fi ESP32.
+
+### LED RGB — Logika Warna (3 pin terpisah: R, G, B)
+
+| Warna LED | Kondisi Flex | Keterangan |
+|-----------|-------------|------------|
+| 🟢 **Hijau** | Sensor lurus (posisi awal) | ADC >= threshold hijau |
+| 🟡 **Kuning** | Melengkung ~90° | ADC di zona tengah |
+| 🔴 **Merah** | Melengkung penuh | ADC <= threshold merah |
+
+Sensor yang dikontrol LED bisa dipilih di `main.cpp`:
+```cpp
+#define LED_FOLLOWS  LED_SOURCE_FLEX_A   // ganti ke LED_SOURCE_FLEX_B untuk Flex B
 ```
 
-*Tip: Menambahkan kapasitor keramik 100nF paralel terhadap resistor 10kΩ ke GND sangat membantu meredam noise jitter pembacaan sensor.*
+### Skema Voltage Divider (Pembagi Tegangan)
+
+Flex sensor bekerja sebagai resistor variabel (~16.6kΩ lurus, ~20kΩ bengkok). Gunakan resistor **18kΩ** untuk mendapatkan range ADC yang optimal:
+
+```text
+  3.3V ──────[ Flex Sensor 16.6k–20kΩ ]──────┬──────[ Resistor 18kΩ ]────── GND
+                                              │
+                                    GPIO ADC (34 / 35)
+                                              │
+                                    [Kapasitor 100nF ke GND]  ← filter noise
+```
+
+| Kondisi Flex | Rflex | Vout | ADC (12-bit) |
+|---|---|---|---|
+| Lurus | ~16.6kΩ | ~1.72V | ~2130 |
+| ~90° bengkok | ~18.3kΩ | ~1.63V | ~2035 |
+| Bengkok penuh | ~20kΩ | ~1.56V | ~1940 |
+
+> **Tip kalibrasi**: Setelah upload firmware, buka Serial Monitor (115200 baud) dan baca nilai `FlexA:xxxx` dan `FlexB:xxxx` saat sensor lurus dan bengkok penuh. Masukkan nilai tersebut ke `FLEX_A_MIN`, `FLEX_A_MAX`, `FLEX_B_MIN`, `FLEX_B_MAX` di bagian `#define` paling atas `main.cpp`.
+
+
 
 ## Deploy GitHub Pages
 
