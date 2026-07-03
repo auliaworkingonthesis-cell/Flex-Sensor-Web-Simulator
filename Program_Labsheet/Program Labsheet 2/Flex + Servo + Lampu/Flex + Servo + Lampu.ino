@@ -15,13 +15,13 @@
 #define LED_YELLOW_PIN   26  // LED Kuning
 #define LED_GREEN_PIN    27  // LED Hijau
 
-// Kalibrasi ADC pembagi tegangan 10K
-#define FLEX_A_MIN  1320
-#define FLEX_A_MAX  1198
+// Kalibrasi ADC pembagi tegangan 22K (5V supply)
+#define FLEX_A_MIN  3040
+#define FLEX_A_MAX  2800
 
 // Threshold LED
-#define THRESHOLD_GREEN   1260
-#define THRESHOLD_YELLOW  1210
+#define THRESHOLD_GREEN   2920
+#define THRESHOLD_YELLOW  2824
 
 Servo myServo;
 int lastAngle = -1;

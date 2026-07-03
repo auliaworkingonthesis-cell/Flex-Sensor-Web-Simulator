@@ -36,13 +36,13 @@
 // ── Kalibrasi ADC (Preferences) ──────────────────────────────
 Preferences preferences;
 
-int flexA_min = 1320;  // ADC lurus (0 derajat)
-int flexA_max = 1198;  // ADC bengkok maksimal (180 derajat)
-int flexB_min = 1320;
-int flexB_max = 1198;
+int flexA_min = 3040;  // ADC lurus (0 derajat)
+int flexA_max = 2800;  // ADC bengkok maksimal (180 derajat)
+int flexB_min = 3040;
+int flexB_max = 2800;
 
-int rgb_green_threshold  = 1260;
-int rgb_yellow_threshold = 1210;
+int rgb_green_threshold  = 2920;
+int rgb_yellow_threshold = 2824;
 
 // ── Pilih Sensor Untuk Mengontrol LED ─────────────────────────
 #define LED_SOURCE_FLEX_A  0

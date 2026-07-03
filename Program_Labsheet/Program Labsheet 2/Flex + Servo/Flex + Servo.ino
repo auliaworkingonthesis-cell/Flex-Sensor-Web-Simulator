@@ -11,9 +11,9 @@
 #define FLEX_A_PIN  34  // Pin ADC untuk Sensor Flex A
 #define SERVO_PIN   18  // Pin PWM untuk Servo Motor
 
-// Kalibrasi ADC pembagi tegangan 10K
-#define FLEX_A_MIN  1320  // ADC lurus (0 derajat)
-#define FLEX_A_MAX  1198  // ADC bengkok maksimal (180 derajat)
+// Kalibrasi ADC pembagi tegangan 22K (5V supply)
+#define FLEX_A_MIN  3040  // ADC lurus (0 derajat)
+#define FLEX_A_MAX  2800  // ADC bengkok maksimal (180 derajat)
 
 Servo myServo;
 int lastAngle = -1;

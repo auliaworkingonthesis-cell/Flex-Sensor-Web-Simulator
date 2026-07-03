@@ -18,10 +18,10 @@
 Preferences preferences;
 
 // Kalibrasi ADC default
-int flexA_min = 1320;
-int flexA_max = 1198;
-int flexB_min = 1320;
-int flexB_max = 1198;
+int flexA_min = 3040;
+int flexA_max = 2800;
+int flexB_min = 3040;
+int flexB_max = 2800;
 
 Servo myServo;
 int lastAngle = -1;

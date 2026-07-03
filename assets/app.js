@@ -16,31 +16,31 @@ const defaults = {
 };
 
 const defaultSettings = {
-  servo: { source: 'flexA', inMin: 1320, inMax: 1198, outMin: 0, outMax: 180, points: [], zones: [] },
+  servo: { source: 'flexA', inMin: 3040, inMax: 2800, outMin: 0, outMax: 180, points: [], zones: [] },
   gripper: {
     armSource: 'flexA',
-    armInMin: 1320,
-    armInMax: 1198,
+    armInMin: 3040,
+    armInMax: 2800,
     armPoints: [],
     armZones: [],
     gripSource: 'flexB',
-    gripInMin: 1320,
-    gripInMax: 1198,
+    gripInMin: 3040,
+    gripInMax: 2800,
     gripPoints: [],
     gripZones: [],
   },
   audio: {
-    graphMin: 1198,
-    graphMax: 1320,
+    graphMin: 2800,
+    graphMax: 3040,
     flexARules: [
-      { min: 1198, max: 1238, text: 'Halo' },
-      { min: 1239, max: 1279, text: 'Apa kabar' },
-      { min: 1280, max: 1320, text: 'Semangat' },
+      { min: 2800, max: 2879, text: 'Halo' },
+      { min: 2880, max: 2959, text: 'Apa kabar' },
+      { min: 2960, max: 3040, text: 'Semangat' },
     ],
     flexBRules: [
-      { min: 1198, max: 1238, text: 'Aulia' },
-      { min: 1239, max: 1279, text: 'Siap' },
-      { min: 1280, max: 1320, text: 'Mantap' },
+      { min: 2800, max: 2879, text: 'Aulia' },
+      { min: 2880, max: 2959, text: 'Siap' },
+      { min: 2960, max: 3040, text: 'Mantap' },
     ],
   },
 };
@@ -99,24 +99,24 @@ function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
     
-    // Auto-migrate old defaults (0 to 4095) to new hardware defaults (1320 to 1198)
-    if (saved.servo && (saved.servo.inMin === 0 && saved.servo.inMax === 4095)) {
-      saved.servo.inMin = 1320;
-      saved.servo.inMax = 1198;
+    // Auto-migrate old defaults to new hardware defaults (3040 to 2800)
+    if (saved.servo && (saved.servo.inMin === 1320 || saved.servo.inMin === 0)) {
+      saved.servo.inMin = 3040;
+      saved.servo.inMax = 2800;
     }
     if (saved.gripper) {
-      if (saved.gripper.armInMin === 0 && saved.gripper.armInMax === 4095) {
-        saved.gripper.armInMin = 1320;
-        saved.gripper.armInMax = 1198;
+      if (saved.gripper.armInMin === 1320 || saved.gripper.armInMin === 0) {
+        saved.gripper.armInMin = 3040;
+        saved.gripper.armInMax = 2800;
       }
-      if (saved.gripper.gripInMin === 0 && saved.gripper.gripInMax === 4095) {
-        saved.gripper.gripInMin = 1320;
-        saved.gripper.gripInMax = 1198;
+      if (saved.gripper.gripInMin === 1320 || saved.gripper.gripInMin === 0) {
+        saved.gripper.gripInMin = 3040;
+        saved.gripper.gripInMax = 2800;
       }
     }
-    if (saved.audio && (saved.audio.graphMin === 0 && saved.audio.graphMax === 4095)) {
-      saved.audio.graphMin = 1198;
-      saved.audio.graphMax = 1320;
+    if (saved.audio && (saved.audio.graphMin === 1198 || saved.audio.graphMin === 0)) {
+      saved.audio.graphMin = 2800;
+      saved.audio.graphMax = 3040;
       saved.audio.flexARules = defaultSettings.audio.flexARules;
       saved.audio.flexBRules = defaultSettings.audio.flexBRules;
     }

@@ -10,9 +10,9 @@
 
 #define FLEX_A_PIN  34  // Pin ADC untuk Sensor Flex A
 
-// Kalibrasi ADC pembagi tegangan 10K
-#define FLEX_A_MIN  1320  // ADC saat lurus (0 derajat)
-#define FLEX_A_MAX  1198  // ADC saat bengkok maksimal (180 derajat)
+// Kalibrasi ADC pembagi tegangan 22K (5V supply)
+#define FLEX_A_MIN  3040  // ADC saat lurus (0 derajat)
+#define FLEX_A_MAX  2800  // ADC saat bengkok maksimal (180 derajat)
 
 // LCD I2C alamat 0x27 (lebar 16 kolom, 4 baris)
 LiquidCrystal_I2C lcd(0x27, 16, 4);

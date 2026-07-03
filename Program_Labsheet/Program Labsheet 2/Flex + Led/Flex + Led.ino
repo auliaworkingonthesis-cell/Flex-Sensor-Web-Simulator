@@ -4,9 +4,9 @@
  * ============================================================
  *  Deskripsi: Kontrol lampu LED (Merah, Kuning, Hijau) berdasarkan
  *             derajat lekukan sensor flex A.
- *             Lurus (ADC >= 1260)        → Hijau (Pin 27)
- *             Bengkok ~90° (1210-1259)   → Kuning (Pin 26)
- *             Bengkok Maks (ADC < 1210)  → Merah (Pin 25)
+ *             Lurus (ADC >= 2920)        → Hijau (Pin 27)
+ *             Bengkok ~90° (2824-2919)   → Kuning (Pin 26)
+ *             Bengkok Maks (ADC < 2824)  → Merah (Pin 25)
  */
 
 #define FLEX_A_PIN      34  // Pin ADC untuk Sensor Flex A
@@ -15,8 +15,8 @@
 #define LED_GREEN_PIN    27  // LED Hijau
 
 // Threshold kalibrasi ADC
-#define THRESHOLD_GREEN   1260
-#define THRESHOLD_YELLOW  1210
+#define THRESHOLD_GREEN   2920
+#define THRESHOLD_YELLOW  2824
 
 void setLed(bool r, bool y, bool g) {
     digitalWrite(LED_RED_PIN,    r ? HIGH : LOW);
