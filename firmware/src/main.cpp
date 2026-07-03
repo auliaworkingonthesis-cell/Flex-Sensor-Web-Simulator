@@ -45,20 +45,17 @@
 #define LED_GREEN_PIN    27    // LED Hijau  — GPIO 27
 // LCD I2C: SDA = GPIO 21, SCL = GPIO 22 (default Arduino ESP32)
 
-// ── Flex Sensor A (Servo & Rack pan) — ADC range ─────────────────────────────
-// CATATAN: Rflex naik saat bengkok → Vout TURUN → ADC TURUN
-// Sehingga: MIN = ADC saat melengkung (bengkok penuh), MAX = ADC saat lurus
-// Dengan R2=10kΩ dan Rflex aktual:
-//   Lurus   : ADC = 1320
-//   Bengkok : ADC = 1198
-// → map(flexA, FLEX_A_MIN, FLEX_A_MAX, ...) = 0 saat lurus, 100 saat bengkok
-#define FLEX_A_MIN       1320  // ADC saat sensor LURUS  (Rflex=16.6kΩ)
-#define FLEX_A_MAX       1198  // ADC saat sensor BENGKOK (Rflex=20kΩ)
-// Tip: Baca nilai Serial Monitor "FlexA:xxxx" untuk kalibrasi aktual
+// ── Flex Sensor Calibration variables (initially loaded from Preferences) ────
+#include <Preferences.h>
+Preferences preferences;
 
-// ── Flex Sensor B (Grip & Audio) — ADC range ─────────────────────────────────
-#define FLEX_B_MIN       1320  // ADC saat sensor LURUS
-#define FLEX_B_MAX       1198  // ADC saat sensor BENGKOK
+int flexA_min = 1320;  // ADC saat lurus (0%)
+int flexA_max = 1198;  // ADC saat bengkok (100%)
+int flexB_min = 1320;
+int flexB_max = 1198;
+
+int rgb_green_threshold  = 1260; // Dihitung dinamis: minA - 50% delta
+int rgb_yellow_threshold = 1210; // Dihitung dinamis: minA - 90% delta
 
 // ── Servo Angle Range ─────────────────────────────────────────────────────────
 #define SERVO_ANGLE_MIN  0     // Sudut minimum servo (derajat)
@@ -72,17 +69,8 @@
 #define LED_SOURCE_FLEX_B  1
 #define LED_FOLLOWS        LED_SOURCE_FLEX_A   // ← GANTI DI SINI
 
-// ── RGB LED Threshold (berlaku untuk sensor yang dipilih di LED_FOLLOWS) ──────
-// INGAT: ADC TURUN saat semakin bengkok!
-// LED Hijau  : ADC >= RGB_GREEN_THRESHOLD  (sensor hampir lurus)
-// LED Kuning : RGB_YELLOW_THRESHOLD <= ADC < RGB_GREEN_THRESHOLD  (~90 derajat)
-// LED Merah  : ADC < RGB_YELLOW_THRESHOLD  (melengkung penuh)
-// Dengan range aktual ~1198–1320, bagi 3 zona:
-//   Hijau  : ADC >= 1260  (0–50% bengkok, memberi buffer lebih besar agar lurus tetap hijau)
-//   Kuning : 1210 <= ADC < 1260  (50–90% bengkok, berpusat di sekitar 1240)
-//   Merah  : ADC < 1210   (bengkok penuh mendekati 1198)
-#define RGB_GREEN_THRESHOLD   1260   // Batas atas zona hijau (ADC naik = lurus)
-#define RGB_YELLOW_THRESHOLD  1210   // Batas atas zona kuning
+// LED indikator dikontrol mengikuti logic warna dinamis (Hijau, Kuning, Merah)
+// Ambang batas warna sekarang otomatis ter-update saat kalibrasi disinkronkan.
 
 // ── Sampling ──────────────────────────────────────────────────────────────────
 #define SAMPLE_COUNT          20     // Jumlah sampel moving average
@@ -188,9 +176,9 @@ void updateLed() {
     int ledAdc = flexA;   // LED mengikuti Flex A (default)
 #endif
 
-    if (ledAdc >= RGB_GREEN_THRESHOLD) {
+    if (ledAdc >= rgb_green_threshold) {
         setLed(false, false, true);   // HIJAU  — lurus
-    } else if (ledAdc >= RGB_YELLOW_THRESHOLD) {
+    } else if (ledAdc >= rgb_yellow_threshold) {
         setLed(false, true, false);   // KUNING — bengkok ~90° (nyalakan pin kuning saja)
     } else {
         setLed(true, false, false);   // MERAH  — bengkok penuh
@@ -203,15 +191,16 @@ void updateLed() {
 int lastServoAngle = -1;
 
 /** Hitung sudut servo secara piecewise-linear agar:
- *  1320 (Lurus)       → 0 derajat
- *  1240 (90 derajat)  → 90 derajat
- *  1198 (Bengkok maks)→ 180 derajat
+ *  Lurus       → 0 derajat
+ *  90 derajat  → 90 derajat
+ *  Bengkok maks→ 180 derajat
  */
 int getServoAngle(int adcVal) {
-    if (adcVal >= 1240) {
-        return mapClamped(adcVal, 1320, 1240, 0, 90);
+    int flexA_mid = flexA_min - (int)((flexA_min - flexA_max) * 0.65);
+    if (adcVal >= flexA_mid) {
+        return mapClamped(adcVal, flexA_min, flexA_mid, 0, 90);
     } else {
-        return mapClamped(adcVal, 1240, 1198, 90, 180);
+        return mapClamped(adcVal, flexA_mid, flexA_max, 90, 180);
     }
 }
 
@@ -291,8 +280,8 @@ void sendCors() {
 
 void handleData() {
     sendCors();
-    int panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, -100, 100);
-    int gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 0, 100);
+    int panPct  = mapClamped(flexA, flexA_min, flexA_max, -100, 100);
+    int gripPct = mapClamped(flexB, flexB_min, flexB_max, 0, 100);
     int angle   = getServoAngle(flexA);
 
     char json[256];
@@ -310,6 +299,34 @@ void startMdns() {
     }
 }
 
+void handleSetConfig() {
+    sendCors();
+    int minA = server.hasArg("minA") ? server.arg("minA").toInt() : flexA_min;
+    int maxA = server.hasArg("maxA") ? server.arg("maxA").toInt() : flexA_max;
+    int minB = server.hasArg("minB") ? server.arg("minB").toInt() : flexB_min;
+    int maxB = server.hasArg("maxB") ? server.arg("maxB").toInt() : flexB_max;
+    
+    // Save to preferences
+    flexA_min = minA;
+    flexA_max = maxA;
+    flexB_min = minB;
+    flexB_max = maxB;
+    
+    int deltaA = flexA_min - flexA_max;
+    rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
+    rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
+    
+    preferences.begin("calib", false);
+    preferences.putInt("minA", flexA_min);
+    preferences.putInt("maxA", flexA_max);
+    preferences.putInt("minB", flexB_min);
+    preferences.putInt("maxB", flexB_max);
+    preferences.end();
+    
+    Serial.println("System: Calibration updated via Web!");
+    server.send(200, "text/plain", "OK");
+}
+
 void startWebServer() {
     startMdns();
     server.on("/", HTTP_GET, []() {
@@ -318,6 +335,7 @@ void startWebServer() {
     });
     server.on("/data", HTTP_OPTIONS, []() { sendCors(); server.send(204); });
     server.on("/data", HTTP_GET, handleData);
+    server.on("/config", HTTP_GET, handleSetConfig);
     server.begin();
     serverStarted = true;
 
@@ -339,6 +357,18 @@ void setup() {
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
+
+    // ── Load stored calibration ──────────────────────────────────────────────
+    preferences.begin("calib", false);
+    flexA_min = preferences.getInt("minA", 1320);
+    flexA_max = preferences.getInt("maxA", 1198);
+    flexB_min = preferences.getInt("minB", 1320);
+    flexB_max = preferences.getInt("maxB", 1198);
+    
+    int deltaA = flexA_min - flexA_max;
+    rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
+    rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
+    preferences.end();
 
     // ── LED pins ─────────────────────────────────────────────────────────────
     pinMode(LED_RED_PIN,    OUTPUT);
@@ -398,13 +428,54 @@ void loop() {
     if (now - lastSerialJson >= SERIAL_JSON_INTERVAL_MS) {
         lastSerialJson = now;
         int   angle   = getServoAngle(flexA);
-        int   panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, 100, -100);  // Reversed
-        int   gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 100, 0);     // Reversed
+        int   panPct  = mapClamped(flexA, flexA_min, flexA_max, 100, -100);  // Reversed
+        int   gripPct = mapClamped(flexB, flexB_min, flexB_max, 100, 0);     // Reversed
         char  json[128];
         snprintf(json, sizeof(json),
             "DATA:{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d,\"phrase\":\"\"}",
             flexA, flexB, panPct, (float)angle, gripPct);
         Serial.println(json);
+    }
+
+    // Helper flat JSON parser
+    auto parseVal = [](String json, String key, int currentVal) -> int {
+        int idx = json.indexOf("\"" + key + "\":");
+        if (idx == -1) return currentVal;
+        int start = idx + key.length() + 3;
+        int end = json.indexOf(",", start);
+        if (end == -1) end = json.indexOf("}", start);
+        if (end == -1) return currentVal;
+        return json.substring(start, end).toInt();
+    };
+
+    // ── Listen for SET: calibration commands via Serial ──────────────────────
+    while (Serial.available()) {
+        String line = Serial.readStringUntil('\n');
+        line.trim();
+        if (line.startsWith("SET:")) {
+            String json = line.substring(4);
+            int minA = parseVal(json, "minA", flexA_min);
+            int maxA = parseVal(json, "maxA", flexA_max);
+            int minB = parseVal(json, "minB", flexB_min);
+            int maxB = parseVal(json, "maxB", flexB_max);
+            
+            flexA_min = minA;
+            flexA_max = maxA;
+            flexB_min = minB;
+            flexB_max = maxB;
+            
+            int deltaA = flexA_min - flexA_max;
+            rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
+            rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
+            
+            preferences.begin("calib", false);
+            preferences.putInt("minA", flexA_min);
+            preferences.putInt("maxA", flexA_max);
+            preferences.putInt("minB", flexB_min);
+            preferences.putInt("maxB", flexB_max);
+            preferences.end();
+            Serial.println("System: Calibration updated via Serial!");
+        }
     }
 
     // ── Update LCD (setiap 100 ms) ────────────────────────────────────────────

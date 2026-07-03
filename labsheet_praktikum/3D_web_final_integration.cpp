@@ -9,6 +9,7 @@
  *          - Output Indikator 3 LED Terpisah (Hijau, Kuning, Merah)
  *          - Komunikasi Dual-Mode: Wi-Fi Web Server (HTTP JSON) &
  *            Web Serial API (DATA JSON Stream).
+ *          - Fitur sinkronisasi kalibrasi realtime dari web disimpan ke flash ESP32.
  */
 
 #include <Arduino.h>
@@ -17,6 +18,7 @@
 #include <ESPmDNS.h>
 #include <ESP32Servo.h>
 #include <LiquidCrystal_I2C.h>
+#include <Preferences.h>
 
 // ── Wi-Fi Credentials & mDNS ─────────────────────────────────
 #define WIFI_SSID        "NAMA_WIFI"
@@ -31,15 +33,16 @@
 #define LED_YELLOW_PIN   26    // LED Kuning (Tekuk ~90°)
 #define LED_GREEN_PIN    27    // LED Hijau  (Lurus)
 
-// ── Kalibrasi ADC (Resistor 10K) ──────────────────────────────
-#define FLEX_A_MIN       1320  // ADC saat lurus (0 derajat)
-#define FLEX_A_MAX       1198  // ADC saat bengkok penuh (180 derajat)
-#define FLEX_B_MIN       1320
-#define FLEX_B_MAX       1198
+// ── Kalibrasi ADC (Preferences) ──────────────────────────────
+Preferences preferences;
 
-// ── RGB LED Thresholds ────────────────────────────────────────
-#define RGB_GREEN_THRESHOLD   1260
-#define RGB_YELLOW_THRESHOLD  1210
+int flexA_min = 1320;  // ADC lurus (0 derajat)
+int flexA_max = 1198;  // ADC bengkok maksimal (180 derajat)
+int flexB_min = 1320;
+int flexB_max = 1198;
+
+int rgb_green_threshold  = 1260;
+int rgb_yellow_threshold = 1210;
 
 // ── Pilih Sensor Untuk Mengontrol LED ─────────────────────────
 #define LED_SOURCE_FLEX_A  0
@@ -127,9 +130,9 @@ void updateLed() {
     int ledAdc = flexA;
 #endif
 
-    if (ledAdc >= RGB_GREEN_THRESHOLD) {
+    if (ledAdc >= rgb_green_threshold) {
         setLed(false, false, true);   // HIJAU
-    } else if (ledAdc >= RGB_YELLOW_THRESHOLD) {
+    } else if (ledAdc >= rgb_yellow_threshold) {
         setLed(false, true, false);   // KUNING
     } else {
         setLed(true, false, false);   // MERAH
@@ -142,10 +145,11 @@ void updateLed() {
 int lastServoAngle = -1;
 
 int getServoAngle(int adcVal) {
-    if (adcVal >= 1240) {
-        return mapClamped(adcVal, 1320, 1240, 0, 90);
+    int flexA_mid = flexA_min - (int)((flexA_min - flexA_max) * 0.65);
+    if (adcVal >= flexA_mid) {
+        return mapClamped(adcVal, flexA_min, flexA_mid, 0, 90);
     } else {
-        return mapClamped(adcVal, 1240, 1198, 90, 180);
+        return mapClamped(adcVal, flexA_mid, flexA_max, 90, 180);
     }
 }
 
@@ -205,8 +209,8 @@ void sendCors() {
 
 void handleData() {
     sendCors();
-    int panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, -100, 100);
-    int gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 0, 100);
+    int panPct  = mapClamped(flexA, flexA_min, flexA_max, -100, 100);
+    int gripPct = mapClamped(flexB, flexB_min, flexB_max, 0, 100);
     int angle   = getServoAngle(flexA);
 
     char json[256];
@@ -214,6 +218,33 @@ void handleData() {
         "{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d,\"phrase\":\"\"}",
         flexA, flexB, panPct, (float)angle, gripPct);
     server.send(200, "application/json", json);
+}
+
+void handleSetConfig() {
+    sendCors();
+    int minA = server.hasArg("minA") ? server.arg("minA").toInt() : flexA_min;
+    int maxA = server.hasArg("maxA") ? server.arg("maxA").toInt() : flexA_max;
+    int minB = server.hasArg("minB") ? server.arg("minB").toInt() : flexB_min;
+    int maxB = server.hasArg("maxB") ? server.arg("maxB").toInt() : flexB_max;
+    
+    flexA_min = minA;
+    flexA_max = maxA;
+    flexB_min = minB;
+    flexB_max = maxB;
+    
+    int deltaA = flexA_min - flexA_max;
+    rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
+    rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
+    
+    preferences.begin("calib", false);
+    preferences.putInt("minA", flexA_min);
+    preferences.putInt("maxA", flexA_max);
+    preferences.putInt("minB", flexB_min);
+    preferences.putInt("maxB", flexB_max);
+    preferences.end();
+    
+    Serial.println("System: Calibration updated via Web!");
+    server.send(200, "text/plain", "OK");
 }
 
 void startWebServer() {
@@ -224,6 +255,7 @@ void startWebServer() {
     }
     server.on("/data", HTTP_GET, handleData);
     server.on("/data", HTTP_OPTIONS, []() { sendCors(); server.send(204); });
+    server.on("/config", HTTP_GET, handleSetConfig);
     server.begin();
     serverStarted = true;
 
@@ -240,6 +272,18 @@ void setup() {
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
+
+    // ── Load stored calibration ──────────────────────────────────────────────
+    preferences.begin("calib", false);
+    flexA_min = preferences.getInt("minA", 1320);
+    flexA_max = preferences.getInt("maxA", 1198);
+    flexB_min = preferences.getInt("minB", 1320);
+    flexB_max = preferences.getInt("maxB", 1198);
+    
+    int deltaA = flexA_min - flexA_max;
+    rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
+    rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
+    preferences.end();
 
     pinMode(LED_RED_PIN,    OUTPUT);
     pinMode(LED_YELLOW_PIN, OUTPUT);
@@ -289,8 +333,8 @@ void loop() {
     if (now - lastSerialJson >= SERIAL_JSON_INTERVAL_MS) {
         lastSerialJson = now;
         int   angle   = getServoAngle(flexA);
-        int   panPct  = mapClamped(flexA, FLEX_A_MIN, FLEX_A_MAX, 100, -100);
-        int   gripPct = mapClamped(flexB, FLEX_B_MIN, FLEX_B_MAX, 100, 0);
+        int   panPct  = mapClamped(flexA, flexA_min, flexA_max, 100, -100);
+        int   gripPct = mapClamped(flexB, flexB_min, flexB_max, 100, 0);
         char  json[128];
         snprintf(json, sizeof(json),
             "DATA:{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d,\"phrase\":\"\"}",
@@ -298,13 +342,49 @@ void loop() {
         Serial.println(json);
     }
 
-    // ── 4. Update LCD 16x4 (setiap 100 ms) ───────────────────
+    // Helper flat JSON parser
+    auto parseVal = [](String json, String key, int currentVal) -> int {
+        int idx = json.indexOf("\"" + key + "\":");
+        if (idx == -1) return currentVal;
+        int start = idx + key.length() + 3;
+        int end = json.indexOf(",", start);
+        if (end == -1) end = json.indexOf("}", start);
+        if (end == -1) return currentVal;
+        return json.substring(start, end).toInt();
+    };
+
+    // ── 4. Listen for SET: calibration commands via Serial ──────────────────────
+    while (Serial.available()) {
+        String line = Serial.readStringUntil('\n');
+        line.trim();
+        if (line.startsWith("SET:")) {
+            String json = line.substring(4);
+            flexA_min = parseVal(json, "minA", flexA_min);
+            flexA_max = parseVal(json, "maxA", flexA_max);
+            flexB_min = parseVal(json, "minB", flexB_min);
+            flexB_max = parseVal(json, "maxB", flexB_max);
+            
+            int deltaA = flexA_min - flexA_max;
+            rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
+            rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
+            
+            preferences.begin("calib", false);
+            preferences.putInt("minA", flexA_min);
+            preferences.putInt("maxA", flexA_max);
+            preferences.putInt("minB", flexB_min);
+            preferences.putInt("maxB", flexB_max);
+            preferences.end();
+            Serial.println("System: Calibration updated via Serial!");
+        }
+    }
+
+    // ── 5. Update LCD 16x4 (setiap 100 ms) ───────────────────
     if (now - lastLcd >= LCD_INTERVAL_MS) {
         lastLcd = now;
         updateLcd();
     }
 
-    // ── 5. Wi-Fi Status Check ────────────────────────────────
+    // ── 6. Wi-Fi Status Check ────────────────────────────────
     if (WiFi.status() == WL_CONNECTED) {
         if (!serverStarted) {
             startWebServer();

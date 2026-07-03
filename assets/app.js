@@ -147,8 +147,43 @@ function loadSettings() {
   }
 }
 
+let syncTimeout = null;
+function syncSettingsToHardware(settings) {
+  // Debounce 600ms agar tidak membanjiri ESP32 saat user sedang mengetik angka di web
+  window.clearTimeout(syncTimeout);
+  syncTimeout = window.setTimeout(async () => {
+    const minA = Math.round(settings.servo.inMin);
+    const maxA = Math.round(settings.servo.inMax);
+    const minB = Math.round(settings.gripper.gripInMin);
+    const maxB = Math.round(settings.gripper.gripInMax);
+
+    // 1. Sinkronisasi via Web Serial USB jika tersambung
+    if (serialActive && serialPort && serialWriter) {
+      try {
+        const cmd = `SET:{"minA":${minA},"maxA":${maxA},"minB":${minB},"maxB":${maxB}}\n`;
+        const encoder = new TextEncoder();
+        await serialWriter.write(encoder.encode(cmd));
+        console.log("Hardware: Berhasil kalibrasi via Serial USB!");
+      } catch (e) {
+        console.error("Gagal sinkronisasi kalibrasi via Serial", e);
+      }
+    }
+
+    // 2. Sinkronisasi via Wi-Fi Web Server jika terhubung mDNS/IP
+    if (selectedMdns) {
+      try {
+        await fetch(`http://${selectedMdns}/config?minA=${minA}&maxA=${maxA}&minB=${minB}&maxB=${maxB}`, { mode: 'no-cors' });
+        console.log("Hardware: Berhasil kalibrasi via Wi-Fi!");
+      } catch (e) {
+        console.error("Gagal sinkronisasi kalibrasi via Wi-Fi", e);
+      }
+    }
+  }, 600);
+}
+
 function saveSettings(settings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  syncSettingsToHardware(settings);
 }
 
 function loadModuleStates() {
@@ -288,6 +323,7 @@ function initSimulator() {
   let pollFailures = 0;
   let serialPort = null;
   let serialReader = null;
+  let serialWriter = null;
   let serialActive = false;
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
@@ -465,6 +501,12 @@ function initSimulator() {
 
   async function disconnectSerial() {
     serialActive = false;
+    if (serialWriter) {
+      try {
+        serialWriter.releaseLock();
+      } catch {}
+      serialWriter = null;
+    }
     if (serialReader) {
       try {
         await serialReader.cancel();
@@ -582,9 +624,12 @@ function initSimulator() {
       serialPort = await navigator.serial.requestPort();
       await serialPort.open({ baudRate: 115200 });
       serialActive = true;
+      serialWriter = serialPort.writable.getWriter(); // Dapatkan writer untuk kirim data ke ESP32
       setHeaderStatus('Serial ESP32', 'green');
       setConnectionStatus('Connected: Serial ESP32', 'green');
       readSerialLoop();
+      // Kirim kalibrasi saat pertama kali tersambung
+      syncSettingsToHardware(settings);
     } catch (error) {
       await disconnectSerial();
       const errorName = error?.name || '';

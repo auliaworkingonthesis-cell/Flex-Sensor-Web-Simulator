@@ -3,15 +3,15 @@
  *  Program Labsheet 3: Flex + Wifi + Servo
  * ============================================================
  *  Deskripsi: Komunikasi data nirkabel menggunakan Wi-Fi Web Server.
- *             ESP32 terhubung ke jaringan Wi-Fi, mengaktifkan mDNS, dan
- *             menyediakan endpoint JSON (/data) yang diakses oleh Web Simulator
- *             sembari mengendalikan Servo fisik secara sinkron.
+ *             ESP32 terhubung ke jaringan Wi-Fi, menyediakan endpoint JSON (/data),
+ *             dan mendukung sinkronisasi kalibrasi dinamis secara online via endpoint /config.
  */
 
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ESP32Servo.h>
+#include <Preferences.h>
 
 #define FLEX_A_PIN       34  // Pin ADC untuk Sensor Flex A
 #define FLEX_B_PIN       35  // Pin ADC untuk Sensor Flex B
@@ -22,9 +22,13 @@
 #define WIFI_PASSWORD    "PASSWORD_WIFI"
 #define MDNS_NAME        "flex-kelompok1"
 
-// Kalibrasi ADC pembagi tegangan 10K
-#define FLEX_MIN  1320
-#define FLEX_MAX  1198
+Preferences preferences;
+
+// Kalibrasi ADC default
+int flexA_min = 1320;
+int flexA_max = 1198;
+int flexB_min = 1320;
+int flexB_max = 1198;
 
 WebServer server(80);
 Servo myServo;
@@ -49,9 +53,9 @@ void handleData() {
     int rawA = analogRead(FLEX_A_PIN);
     int rawB = analogRead(FLEX_B_PIN);
     
-    int panPct  = mapClamped(rawA, FLEX_MIN, FLEX_MAX, 100, -100);
-    int gripPct = mapClamped(rawB, FLEX_MIN, FLEX_MAX, 100, 0);
-    int angle   = mapClamped(rawA, FLEX_MIN, FLEX_MAX, 0, 180);
+    int panPct  = mapClamped(rawA, flexA_min, flexA_max, 100, -100);
+    int gripPct = mapClamped(rawB, flexB_min, flexB_max, 100, 0);
+    int angle   = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
     
     char json[256];
     snprintf(json, sizeof(json),
@@ -59,6 +63,29 @@ void handleData() {
         rawA, rawB, panPct, (float)angle, gripPct);
         
     server.send(200, "application/json", json);
+}
+
+void handleSetConfig() {
+    sendCorsHeaders();
+    int minA = server.hasArg("minA") ? server.arg("minA").toInt() : flexA_min;
+    int maxA = server.hasArg("maxA") ? server.arg("maxA").toInt() : flexA_max;
+    int minB = server.hasArg("minB") ? server.arg("minB").toInt() : flexB_min;
+    int maxB = server.hasArg("maxB") ? server.arg("maxB").toInt() : flexB_max;
+    
+    flexA_min = minA;
+    flexA_max = maxA;
+    flexB_min = minB;
+    flexB_max = maxB;
+    
+    preferences.begin("calib", false);
+    preferences.putInt("minA", flexA_min);
+    preferences.putInt("maxA", flexA_max);
+    preferences.putInt("minB", flexB_min);
+    preferences.putInt("maxB", flexB_max);
+    preferences.end();
+    
+    Serial.println("System: Calibration updated via Web!");
+    server.send(200, "text/plain", "OK");
 }
 
 void setup() {
@@ -69,6 +96,14 @@ void setup() {
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
+    // Load kalibrasi
+    preferences.begin("calib", false);
+    flexA_min = preferences.getInt("minA", 1320);
+    flexA_max = preferences.getInt("maxA", 1198);
+    flexB_min = preferences.getInt("minB", 1320);
+    flexB_max = preferences.getInt("maxB", 1198);
+    preferences.end();
+
     // Konfigurasi Servo
     myServo.attach(SERVO_PIN);
     myServo.write(0);
@@ -92,6 +127,7 @@ void setup() {
     // Routing Web Server
     server.on("/data", HTTP_GET, handleData);
     server.on("/data", HTTP_OPTIONS, []() { sendCorsHeaders(); server.send(204); });
+    server.on("/config", HTTP_GET, handleSetConfig);
     server.begin();
 }
 
@@ -101,7 +137,7 @@ void loop() {
     int rawA = analogRead(FLEX_A_PIN);
     
     // Update servo fisik mengikuti lekukan Sensor Flex A
-    int angle = mapClamped(rawA, FLEX_MIN, FLEX_MAX, 0, 180);
+    int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
     if (angle != lastAngle) {
         myServo.write(angle);
         lastAngle = angle;
