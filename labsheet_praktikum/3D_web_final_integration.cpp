@@ -156,7 +156,7 @@ int getServoAngle(int adcVal) {
 void updateServo() {
     int angle = getServoAngle(flexA);
     if (angle != lastServoAngle) {
-        myServo.write(angle);
+        myServo.write(180 - angle); // Hardware inverted (reversed ruler)
         lastServoAngle = angle;
     }
 }

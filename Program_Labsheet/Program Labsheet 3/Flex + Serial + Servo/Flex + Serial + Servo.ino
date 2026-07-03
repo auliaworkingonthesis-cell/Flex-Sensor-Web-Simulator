@@ -62,7 +62,7 @@ void loop() {
     // ── 1. Gerakkan Servo Fisik ──────────────────────────────────────────────
     int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
     if (angle != lastAngle) {
-        myServo.write(angle);
+        myServo.write(180 - angle); // Inversi hardware servo fisik
         lastAngle = angle;
     }
     

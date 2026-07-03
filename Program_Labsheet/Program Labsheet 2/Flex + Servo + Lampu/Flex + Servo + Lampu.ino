@@ -58,7 +58,7 @@ void loop() {
     int angle = map(constrainedADC, FLEX_A_MIN, FLEX_A_MAX, 0, 180);
     
     if (angle != lastAngle) {
-        myServo.write(angle);
+        myServo.write(180 - angle); // Inversi hardware servo fisik
         lastAngle = angle;
     }
     

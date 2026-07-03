@@ -139,7 +139,7 @@ void loop() {
     // Update servo fisik mengikuti lekukan Sensor Flex A
     int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
     if (angle != lastAngle) {
-        myServo.write(angle);
+        myServo.write(180 - angle); // Inversi hardware servo fisik
         lastAngle = angle;
     }
     
