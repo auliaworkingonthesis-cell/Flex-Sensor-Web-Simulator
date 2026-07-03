@@ -31,9 +31,8 @@ void setup() {
 void loop() {
     int rawADC = analogRead(FLEX_A_PIN);
     
-    // Estimasi tegangan terkalibrasi sesuai voltmeter fisik (3070 ADC = 2.570V, 2808 ADC = 2.375V)
-    int constrainedVoltADC = constrain(rawADC, 2808, 3070);
-    float voltage = map(constrainedVoltADC, 2808, 3070, 2375, 2570) / 1000.0;
+    // Estimasi tegangan (V_REF terkalibrasi ke 3.428V untuk mencocokkan drop tegangan LDO)
+    float voltage = (rawADC * 3.428) / 4095.0;
     
     // Urutkan limit constrain agar tidak error
     int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
