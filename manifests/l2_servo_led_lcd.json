@@ -1,0 +1,13 @@
+{
+  "name": "Labsheet 2: Flex + Servo + Lampu + LCD",
+  "version": "1.0.0",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "../binaries/l2_servo_led_lcd.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}

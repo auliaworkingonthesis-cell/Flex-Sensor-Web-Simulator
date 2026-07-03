@@ -1,0 +1,13 @@
+{
+  "name": "Labsheet 1: Value Flex + Sudut + Tegangan di LCD",
+  "version": "1.0.0",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "../binaries/l1_lcd.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}

@@ -289,6 +289,7 @@ function initSimulator() {
     servoToggle: $('servoToggle'),
     gripperToggle: $('gripperToggle'),
     graphAudioToggle: $('graphAudioToggle'),
+    flasherToggle: $('flasherToggle'),
     mdnsInput: $('mdnsInput'),
     connectEsp: $('connectEsp'),
     connectSerial: $('connectSerial'),
@@ -304,11 +305,13 @@ function initSimulator() {
   if ('servo'      in savedModules) refs.servoToggle.checked      = savedModules.servo;
   if ('gripper'    in savedModules) refs.gripperToggle.checked    = savedModules.gripper;
   if ('graphAudio' in savedModules) refs.graphAudioToggle.checked = savedModules.graphAudio;
+  if ('flasher'    in savedModules) refs.flasherToggle.checked    = savedModules.flasher;
 
   const modules = {
     servo: refs.servoToggle.checked,
     gripper: refs.gripperToggle.checked,
     graphAudio: refs.graphAudioToggle.checked,
+    flasher: refs.flasherToggle.checked,
   };
 
   let voiceEnabled = false;
@@ -669,19 +672,22 @@ function initSimulator() {
     modules.servo = refs.servoToggle.checked;
     modules.gripper = refs.gripperToggle.checked;
     modules.graphAudio = refs.graphAudioToggle.checked;
+    modules.flasher = refs.flasherToggle.checked;
     document.querySelector('[data-module-card="servo"]').classList.toggle('module-off', !modules.servo);
     document.querySelector('[data-module-card="gripper"]').classList.toggle('module-off', !modules.gripper);
     document.querySelector('[data-module-card="graphAudio"]').classList.toggle('module-off', !modules.graphAudio);
+    document.querySelector('[data-module-card="flasher"]').classList.toggle('module-off', !modules.flasher);
     refs.activeModules.textContent = Object.values(modules).filter(Boolean).length;
   }
 
-  [refs.servoToggle, refs.gripperToggle, refs.graphAudioToggle].forEach((toggle) => {
+  [refs.servoToggle, refs.gripperToggle, refs.graphAudioToggle, refs.flasherToggle].forEach((toggle) => {
     toggle.addEventListener('change', () => {
       syncModuleState();
       saveModuleStates({
         servo:      refs.servoToggle.checked,
         gripper:    refs.gripperToggle.checked,
         graphAudio: refs.graphAudioToggle.checked,
+        flasher:    refs.flasherToggle.checked,
       });
     });
   });
@@ -846,6 +852,17 @@ function initSimulator() {
     }
 
     requestAnimationFrame(draw);
+  }
+
+  // ── Firmware dropdown select event listener ─────────────────────────────
+  const firmwareSelect = $('firmwareSelect');
+  const espInstallBtn = $('espInstallBtn');
+  if (firmwareSelect && espInstallBtn) {
+    firmwareSelect.addEventListener('change', () => {
+      const selected = firmwareSelect.value;
+      espInstallBtn.setAttribute('manifest', `manifests/${selected}.json`);
+      console.log(`Flasher: Manifest updated to manifests/${selected}.json`);
+    });
   }
 
   setConnectionStatus('Disconnected', 'red');

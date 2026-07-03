@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#050506" />
   <title>Flex Sensor Trainer Kit</title>
   <link rel="stylesheet" href="assets/styles.css" />
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </head>
 
 <body data-page="simulator">
@@ -224,6 +225,67 @@
             </div>
             <div class="threshold-list" id="audioRulesB"></div>
           </section>
+        </div>
+      </article>
+
+      <article class="trainer-module" data-module-card="flasher">
+        <div class="module-head">
+          <div>
+            <span>Upload Praktikum Tanpa Arduino IDE</span>
+            <h2>Web Installer / Flasher</h2>
+          </div>
+          <label class="switch">
+            <input id="flasherToggle" type="checkbox" checked />
+            <span></span>
+          </label>
+        </div>
+        
+        <div class="flasher-card" style="padding: 15px; display: flex; flex-direction: column; gap: 15px; height: 100%; justify-content: space-between;">
+          <p class="flasher-desc" style="font-size: 0.85rem; opacity: 0.8; margin: 0; line-height: 1.4;">
+            Pilih praktikum di bawah ini, sambungkan ESP32 via USB, lalu klik tombol untuk mengunggah program langsung dari browser Chrome/Edge.
+          </p>
+          
+          <div class="settings-grid flasher-settings" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
+            <label style="display: flex; flex-direction: column; gap: 5px;">
+              <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.6;">Pilih Program Praktikum</span>
+              <select id="firmwareSelect" style="width: 100%; background: #131316; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.9rem; outline: none; cursor: pointer;">
+                <optgroup label="Program Labsheet 1">
+                  <option value="l1_serial">Value Flex di Serial Monitor</option>
+                  <option value="l1_lcd">Value Flex + Sudut + Tegangan di LCD</option>
+                </optgroup>
+                <optgroup label="Program Labsheet 2">
+                  <option value="l2_led">Flex + LED</option>
+                  <option value="l2_servo">Flex + Servo</option>
+                  <option value="l2_servo_led">Flex + Servo + Lampu</option>
+                  <option value="l2_servo_led_lcd">Flex + Servo + Lampu + LCD</option>
+                </optgroup>
+                <optgroup label="Program Labsheet 3">
+                  <option value="l3_serial_servo">Flex + Serial + Servo</option>
+                  <option value="l3_wifi_servo">Flex + Wifi + Servo</option>
+                  <option value="l3_dual_servo">Flex + Serial + Wifi + Servo</option>
+                </optgroup>
+              </select>
+            </label>
+            
+            <div style="margin-top: 10px; display: flex; justify-content: center; width: 100%;">
+              <esp-web-install-button id="espInstallBtn" manifest="manifests/l1_serial.json" style="width: 100%;">
+                <button slot="activate" class="small-action" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600; background: linear-gradient(135deg, #0070f3, #00dfd8); color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s;">
+                  ⚡ Flash ke ESP32
+                </button>
+                <span slot="unsupported" style="color: #ff3333; font-size: 0.85rem; text-align: center; display: block; padding: 10px;">
+                  ⚠️ Browser Anda tidak mendukung Web Serial (Gunakan Chrome/Edge)
+                </span>
+              </esp-web-install-button>
+            </div>
+          </div>
+          
+          <div class="flasher-info" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; font-size: 0.8rem; opacity: 0.6; line-height: 1.4;">
+            <strong>Catatan Penting:</strong>
+            <ul style="margin: 4px 0 0 15px; padding: 0;">
+              <li>Putuskan koneksi Serial (klik <strong>Disconnect</strong> di atas) sebelum men-flash.</li>
+              <li>Jika gagal terhubung, tekan & tahan tombol <strong>BOOT</strong> di ESP32 saat proses flashing dimulai.</li>
+            </ul>
+          </div>
         </div>
       </article>
     </section>
