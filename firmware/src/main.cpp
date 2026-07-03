@@ -235,19 +235,20 @@ void lcdPrintInt(int col, int row, int value, int width) {
 }
 
 void updateLcd() {
+    float voltA = (flexA * 3.3) / 4095.0;
+    float voltB = (flexB * 3.3) / 4095.0;
+
     // ── Baris 0: Flex A ──────────────────────────────────────────────────────
     lcd.setCursor(0, 0);
-    lcd.print("Flex A:");
-    lcdPrintInt(7, 0, flexA, 4);
-    lcd.setCursor(11, 0);
-    lcd.print("     ");   // Clear sisa kolom 11–15
+    char bufA[17];
+    snprintf(bufA, sizeof(bufA), "A:%4d  V:%4.2fV", flexA, voltA);
+    lcd.print(bufA);
 
     // ── Baris 1: Flex B ──────────────────────────────────────────────────────
     lcd.setCursor(0, 1);
-    lcd.print("Flex B:");
-    lcdPrintInt(7, 1, flexB, 4);
-    lcd.setCursor(11, 1);
-    lcd.print("     ");
+    char bufB[17];
+    snprintf(bufB, sizeof(bufB), "B:%4d  V:%4.2fV", flexB, voltB);
+    lcd.print(bufB);
 
     // ── Baris 2: Servo Angle ─────────────────────────────────────────────────
     int angle = getServoAngle(flexA);
