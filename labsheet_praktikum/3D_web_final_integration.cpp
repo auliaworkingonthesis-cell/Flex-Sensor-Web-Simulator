@@ -275,10 +275,23 @@ void setup() {
 
     // ── Load stored calibration ──────────────────────────────────────────────
     preferences.begin("calib", false);
-    flexA_min = preferences.getInt("minA", 1320);
-    flexA_max = preferences.getInt("maxA", 1198);
-    flexB_min = preferences.getInt("minB", 1320);
-    flexB_max = preferences.getInt("maxB", 1198);
+    flexA_min = preferences.getInt("minA", 3040);
+    flexA_max = preferences.getInt("maxA", 2800);
+    flexB_min = preferences.getInt("minB", 3040);
+    flexB_max = preferences.getInt("maxB", 2800);
+    
+    // Jika memori flash masih menyimpan nilai kalibrasi lama (< 2000), timpa paksa ke 3040-2800
+    if (flexA_min < 2000) {
+        flexA_min = 3040;
+        flexA_max = 2800;
+        flexB_min = 3040;
+        flexB_max = 2800;
+        preferences.putInt("minA", 3040);
+        preferences.putInt("maxA", 2800);
+        preferences.putInt("minB", 3040);
+        preferences.putInt("maxB", 2800);
+        Serial.println("System: Stored preferences detected old range. Force updated to 3040-2800!");
+    }
     
     int deltaA = flexA_min - flexA_max;
     rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
