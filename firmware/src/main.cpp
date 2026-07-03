@@ -235,8 +235,8 @@ void lcdPrintInt(int col, int row, int value, int width) {
 }
 
 void updateLcd() {
-    float voltA = (flexA * 3.428) / 4095.0;
-    float voltB = (flexB * 3.428) / 4095.0;
+    float voltA = ((flexA * 3.055) / 4095.0) + 0.28;
+    float voltB = ((flexB * 3.055) / 4095.0) + 0.28;
 
     // ── Baris 0: Flex A ──────────────────────────────────────────────────────
     lcd.setCursor(0, 0);
