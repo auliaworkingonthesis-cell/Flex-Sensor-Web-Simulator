@@ -1,4 +1,4 @@
-﻿#include <Arduino.h>
+#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 3: Flex + Wifi + Servo
@@ -6,13 +6,13 @@
  *  Deskripsi: Komunikasi data nirkabel menggunakan Wi-Fi Web Server.
  *             ESP32 terhubung ke jaringan Wi-Fi, menyediakan endpoint JSON (/data),
  *             dan mendukung sinkronisasi kalibrasi dinamis secara online via endpoint /config.
+ *             Semua proses berjalan secara non-blocking menggunakan millis().
  */
 
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ESP32Servo.h>
-
 
 #define FLEX_A_PIN       34  // Pin ADC untuk Sensor Flex A
 #define FLEX_B_PIN       35  // Pin ADC untuk Sensor Flex B
@@ -23,8 +23,6 @@
 #define WIFI_PASSWORD    "PASSWORD_WIFI"
 #define MDNS_NAME        "flex-kelompok1"
 
-
-
 // Kalibrasi ADC default
 int flexA_min = 3054;
 int flexA_max = 2766;
@@ -34,6 +32,7 @@ int flexB_max = 2766;
 WebServer server(80);
 Servo myServo;
 int lastAngle = -1;
+unsigned long lastServoUpdate = 0;
 
 int mapClamped(int val, int inMin, int inMax, int outMin, int outMax) {
     int low = min(inMin, inMax);
@@ -60,7 +59,7 @@ void handleData() {
     
     char json[256];
     snprintf(json, sizeof(json),
-        "{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d}",
+        "{"flexA":%d,"flexB":%d,"pan":%d,"servo":%.1f,"grip":%d}",
         rawA, rawB, panPct, (float)angle, gripPct);
         
     server.send(200, "application/json", json);
@@ -78,8 +77,6 @@ void handleSetConfig() {
     flexB_min = minB;
     flexB_max = maxB;
     
-    
-    
     Serial.println("System: Calibration updated via Web!");
     server.send(200, "text/plain", "OK");
 }
@@ -91,13 +88,10 @@ void setup() {
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
-    
-    // Load kalibrasi
-    
 
     // Konfigurasi Servo
     myServo.attach(SERVO_PIN);
-    myServo.write(0);
+    myServo.write(180);
     
     // Hubungkan ke Wi-Fi
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -125,14 +119,17 @@ void setup() {
 void loop() {
     server.handleClient();
     
-    int rawA = analogRead(FLEX_A_PIN);
+    unsigned long now = millis();
     
-    // Update servo fisik mengikuti lekukan Sensor Flex A
-    int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
-    if (angle != lastAngle) {
-        myServo.write(180 - angle); // Inversi hardware servo fisik
-        lastAngle = angle;
+    // ── Update servo fisik mengikuti lekukan Sensor Flex A (Setiap 20ms) ──────
+    if (now - lastServoUpdate >= 20) {
+        lastServoUpdate = now;
+        
+        int rawA = analogRead(FLEX_A_PIN);
+        int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
+        if (angle != lastAngle) {
+            myServo.write(180 - angle); // Inversi hardware servo fisik
+            lastAngle = angle;
+        }
     }
-    
-    delay(20);
 }

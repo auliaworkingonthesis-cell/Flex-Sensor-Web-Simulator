@@ -1,11 +1,11 @@
-﻿#include <Arduino.h>
+#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Servo + Lampu
  * ============================================================
  *  Deskripsi: Integrasi pergerakan Servo Motor dan indikator 
- *             3 buah lampu LED (Merah, Kuning, Hijau) berdasarkan 
- *             lekukan Sensor Flex A.
+ *             3 buah lampu LED berdasarkan lekukan Sensor Flex A
+ *             secara non-blocking.
  */
 
 #include <ESP32Servo.h>
@@ -26,6 +26,8 @@
 
 Servo myServo;
 int lastAngle = -1;
+unsigned long lastUpdate = 0;
+const unsigned long interval = 20; // Check interval 20ms
 
 void setLed(bool r, bool y, bool g) {
     digitalWrite(LED_RED_PIN,    r ? HIGH : LOW);
@@ -46,34 +48,36 @@ void setup() {
     
     // Konfigurasi Servo
     myServo.attach(SERVO_PIN);
-    myServo.write(0);
+    myServo.write(180);
 }
 
 void loop() {
-    int rawADC = analogRead(FLEX_A_PIN);
-    
-    // â”€â”€ 1. Gerakkan Servo Motor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
-    int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
-    int constrainedADC = constrain(rawADC, lowLimit, highLimit);
-    int angle = map(constrainedADC, FLEX_A_MIN, FLEX_A_MAX, 0, 180);
-    
-    if (angle != lastAngle) {
-        myServo.write(180 - angle); // Inversi hardware servo fisik
-        lastAngle = angle;
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastUpdate >= interval) {
+        lastUpdate = currentMillis;
+        
+        int rawADC = analogRead(FLEX_A_PIN);
+        
+        // ── 1. Gerakkan Servo Motor ──────────────────────────────────────────────
+        int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
+        int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
+        int constrainedADC = constrain(rawADC, lowLimit, highLimit);
+        int angle = map(constrainedADC, FLEX_A_MIN, FLEX_A_MAX, 0, 180);
+        
+        if (angle != lastAngle) {
+            myServo.write(180 - angle); // Inversi hardware servo fisik
+            lastAngle = angle;
+        }
+        
+        // ── 2. Nyalakan Lampu LED Sesuai Kondisi ──────────────────────────────────
+        if (rawADC >= THRESHOLD_GREEN) {
+            setLed(false, false, true);   // Hijau (Lurus)
+        } 
+        else if (rawADC >= THRESHOLD_YELLOW) {
+            setLed(false, true, false);   // Kuning (Bengkok ~90°)
+        } 
+        else {
+            setLed(true, false, false);   // Merah (Bengkok maksimal)
+        }
     }
-    
-    // â”€â”€ 2. Nyalakan Lampu LED Sesuai Kondisi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (rawADC >= THRESHOLD_GREEN) {
-        setLed(false, false, true);   // Hijau (Lurus)
-    } 
-    else if (rawADC >= THRESHOLD_YELLOW) {
-        setLed(false, true, false);   // Kuning (Bengkok ~90Â°)
-    } 
-    else {
-        setLed(true, false, false);   // Merah (Bengkok maksimal)
-    }
-    
-    delay(20);
 }
-

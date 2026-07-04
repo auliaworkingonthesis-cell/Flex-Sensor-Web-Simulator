@@ -1,13 +1,13 @@
-﻿#include <Arduino.h>
+#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Led
  * ============================================================
  *  Deskripsi: Kontrol lampu LED (Merah, Kuning, Hijau) berdasarkan
- *             derajat lekukan sensor flex A.
- *             Lurus (ADC >= 2910)        â†’ Hijau (Pin 27)
- *             Bengkok ~90Â° (2795-2909)   â†’ Kuning (Pin 26)
- *             Bengkok Maks (ADC < 2795)  â†’ Merah (Pin 25)
+ *             derajat lekukan sensor flex A secara non-blocking.
+ *             Lurus (ADC >= 2910)        → Hijau (Pin 27)
+ *             Bengkok ~90° (2795-2909)   → Kuning (Pin 26)
+ *             Bengkok Maks (ADC < 2795)  → Merah (Pin 25)
  */
 
 #define FLEX_A_PIN      34  // Pin ADC untuk Sensor Flex A
@@ -18,6 +18,9 @@
 // Threshold kalibrasi ADC
 #define THRESHOLD_GREEN   2910
 #define THRESHOLD_YELLOW  2795
+
+unsigned long lastUpdate = 0;
+const unsigned long interval = 50; // Update LED setiap 50ms
 
 void setLed(bool r, bool y, bool g) {
     digitalWrite(LED_RED_PIN,    r ? HIGH : LOW);
@@ -38,19 +41,21 @@ void setup() {
 }
 
 void loop() {
-    int rawADC = analogRead(FLEX_A_PIN);
-    
-    // Logika pemilihan LED yang menyala
-    if (rawADC >= THRESHOLD_GREEN) {
-        setLed(false, false, true);   // Hijau aktif (Lurus)
-    } 
-    else if (rawADC >= THRESHOLD_YELLOW) {
-        setLed(false, true, false);   // Kuning aktif (Bengkok ~90Â°)
-    } 
-    else {
-        setLed(true, false, false);   // Merah aktif (Bengkok maksimal)
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastUpdate >= interval) {
+        lastUpdate = currentMillis;
+        
+        int rawADC = analogRead(FLEX_A_PIN);
+        
+        // Logika pemilihan LED yang menyala
+        if (rawADC >= THRESHOLD_GREEN) {
+            setLed(false, false, true);   // Hijau aktif (Lurus)
+        } 
+        else if (rawADC >= THRESHOLD_YELLOW) {
+            setLed(false, true, false);   // Kuning aktif (Bengkok ~90°)
+        } 
+        else {
+            setLed(true, false, false);   // Merah aktif (Bengkok maksimal)
+        }
     }
-    
-    delay(50);
 }
-

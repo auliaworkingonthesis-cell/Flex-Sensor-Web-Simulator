@@ -1,10 +1,10 @@
-﻿#include <Arduino.h>
+#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Servo
  * ============================================================
  *  Deskripsi: Menggerakkan Servo Motor secara linear berdasarkan
- *             derajat lekukan Sensor Flex A (0 - 180 derajat).
+ *             derajat lekukan Sensor Flex A secara non-blocking.
  */
 
 #include <ESP32Servo.h>
@@ -18,6 +18,8 @@
 
 Servo myServo;
 int lastAngle = -1;
+unsigned long lastUpdate = 0;
+const unsigned long interval = 20; // Update servo setiap 20ms
 
 void setup() {
     // Konfigurasi ADC
@@ -26,25 +28,27 @@ void setup() {
     
     // Hubungkan servo
     myServo.attach(SERVO_PIN);
-    myServo.write(0);
+    myServo.write(180); // Default lurus
 }
 
 void loop() {
-    int rawADC = analogRead(FLEX_A_PIN);
-    
-    // Urutkan batas constrain
-    int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
-    int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
-    int constrainedADC = constrain(rawADC, lowLimit, highLimit);
-    
-    // Mapping ke sudut servo 0 s.d 180 derajat
-    int angle = map(constrainedADC, FLEX_A_MIN, FLEX_A_MAX, 0, 180);
-    
-    if (angle != lastAngle) {
-        myServo.write(180 - angle); // Inversi hardware servo fisik
-        lastAngle = angle;
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastUpdate >= interval) {
+        lastUpdate = currentMillis;
+        
+        int rawADC = analogRead(FLEX_A_PIN);
+        
+        // Urutkan batas constrain
+        int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
+        int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
+        int constrainedADC = constrain(rawADC, lowLimit, highLimit);
+        
+        // Mapping ke sudut servo 0 s.d 180 derajat
+        int angle = map(constrainedADC, FLEX_A_MIN, FLEX_A_MAX, 0, 180);
+        
+        if (angle != lastAngle) {
+            myServo.write(180 - angle); // Inversi hardware servo fisik
+            lastAngle = angle;
+        }
     }
-    
-    delay(20);
 }
-
