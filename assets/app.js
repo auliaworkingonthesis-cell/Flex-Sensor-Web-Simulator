@@ -182,7 +182,15 @@ function syncSettingsToHardware(settings) {
 }
 
 function saveSettings(settings) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+      alert('Memori penyimpanan browser penuh! File audio kustom yang Anda upload terlalu besar. Harap gunakan file audio yang lebih kecil (disarankan di bawah 500KB).');
+    } else {
+      console.error('Gagal menyimpan pengaturan', e);
+    }
+  }
   syncSettingsToHardware(settings);
 }
 
@@ -761,6 +769,13 @@ function initSimulator() {
       fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        
+        // Batasi ukuran file hingga 1MB (1.048.576 bytes) untuk mencegah melebihi kuota LocalStorage
+        if (file.size > 1024 * 1024) {
+          alert('Ukuran file suara terlalu besar! Harap upload file audio berukuran kurang dari 1MB (disarankan potongan suara pendek / efek alarm).');
+          fileInput.value = '';
+          return;
+        }
         
         const reader = new FileReader();
         reader.onload = (evt) => {
