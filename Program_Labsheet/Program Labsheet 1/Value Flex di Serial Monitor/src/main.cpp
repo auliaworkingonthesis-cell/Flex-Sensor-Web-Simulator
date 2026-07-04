@@ -1,3 +1,4 @@
+﻿#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 1: Value Flex di Serial Monitor
@@ -29,3 +30,4 @@ void loop() {
     
     delay(100);  // Delay 100ms agar pembacaan nyaman dibaca
 }
+

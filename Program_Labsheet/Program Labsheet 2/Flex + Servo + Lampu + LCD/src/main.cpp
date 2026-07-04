@@ -1,3 +1,4 @@
+﻿#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Servo + Lampu + LCD
@@ -16,12 +17,12 @@
 #define LED_GREEN_PIN    27  // LED Hijau
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  3040
-#define FLEX_A_MAX  2800
+#define FLEX_A_MIN  3054
+#define FLEX_A_MAX  2766
 
 // Threshold LED
-#define THRESHOLD_GREEN   2920
-#define THRESHOLD_YELLOW  2824
+#define THRESHOLD_GREEN   2910
+#define THRESHOLD_YELLOW  2795
 
 Servo myServo;
 LiquidCrystal_I2C lcd(0x27, 16, 4);
@@ -59,7 +60,7 @@ void setup() {
 void loop() {
     int rawADC = analogRead(FLEX_A_PIN);
     
-    // ── 1. Gerakkan Servo Motor ──────────────────────────────────────────────
+    // â”€â”€ 1. Gerakkan Servo Motor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
     int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
     int constrainedADC = constrain(rawADC, lowLimit, highLimit);
@@ -70,7 +71,7 @@ void loop() {
         lastAngle = angle;
     }
     
-    // ── 2. Nyalakan Lampu LED & Tentukan Status ───────────────────────────────
+    // â”€â”€ 2. Nyalakan Lampu LED & Tentukan Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const char* statusStr = "";
     if (rawADC >= THRESHOLD_GREEN) {
         setLed(false, false, true);   // Hijau
@@ -85,7 +86,7 @@ void loop() {
         statusStr = "Bengkok [Merah]";
     }
     
-    // ── 3. Tampilkan Data di LCD 16x4 (Setiap 200ms) ──────────────────────────
+    // â”€â”€ 3. Tampilkan Data di LCD 16x4 (Setiap 200ms) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     unsigned long now = millis();
     if (now - lastLcdUpdate >= 200) {
         lastLcdUpdate = now;
@@ -115,3 +116,4 @@ void loop() {
     
     delay(10);
 }
+

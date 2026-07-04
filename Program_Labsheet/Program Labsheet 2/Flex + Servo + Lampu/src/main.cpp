@@ -1,3 +1,4 @@
+﻿#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Servo + Lampu
@@ -16,12 +17,12 @@
 #define LED_GREEN_PIN    27  // LED Hijau
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  3040
-#define FLEX_A_MAX  2800
+#define FLEX_A_MIN  3054
+#define FLEX_A_MAX  2766
 
 // Threshold LED
-#define THRESHOLD_GREEN   2920
-#define THRESHOLD_YELLOW  2824
+#define THRESHOLD_GREEN   2910
+#define THRESHOLD_YELLOW  2795
 
 Servo myServo;
 int lastAngle = -1;
@@ -51,7 +52,7 @@ void setup() {
 void loop() {
     int rawADC = analogRead(FLEX_A_PIN);
     
-    // ── 1. Gerakkan Servo Motor ──────────────────────────────────────────────
+    // â”€â”€ 1. Gerakkan Servo Motor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
     int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
     int constrainedADC = constrain(rawADC, lowLimit, highLimit);
@@ -62,12 +63,12 @@ void loop() {
         lastAngle = angle;
     }
     
-    // ── 2. Nyalakan Lampu LED Sesuai Kondisi ──────────────────────────────────
+    // â”€â”€ 2. Nyalakan Lampu LED Sesuai Kondisi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (rawADC >= THRESHOLD_GREEN) {
         setLed(false, false, true);   // Hijau (Lurus)
     } 
     else if (rawADC >= THRESHOLD_YELLOW) {
-        setLed(false, true, false);   // Kuning (Bengkok ~90°)
+        setLed(false, true, false);   // Kuning (Bengkok ~90Â°)
     } 
     else {
         setLed(true, false, false);   // Merah (Bengkok maksimal)
@@ -75,3 +76,4 @@ void loop() {
     
     delay(20);
 }
+

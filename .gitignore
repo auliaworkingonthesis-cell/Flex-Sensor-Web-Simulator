@@ -16,3 +16,5 @@ mini-scara-robot-servo-rcxaz-9g-or-mg90s-1.snapshot.5/
 *.ipt
 *.stp
 *.step
+.pio/
+.vscode/

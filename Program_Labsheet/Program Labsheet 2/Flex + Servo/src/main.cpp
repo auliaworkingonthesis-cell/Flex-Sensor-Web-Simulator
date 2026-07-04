@@ -1,3 +1,4 @@
+﻿#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Servo
@@ -12,8 +13,8 @@
 #define SERVO_PIN   18  // Pin PWM untuk Servo Motor
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  3040  // ADC lurus (0 derajat)
-#define FLEX_A_MAX  2800  // ADC bengkok maksimal (180 derajat)
+#define FLEX_A_MIN  3054  // ADC lurus (0 derajat)
+#define FLEX_A_MAX  2766  // ADC bengkok maksimal (180 derajat)
 
 Servo myServo;
 int lastAngle = -1;
@@ -46,3 +47,4 @@ void loop() {
     
     delay(20);
 }
+

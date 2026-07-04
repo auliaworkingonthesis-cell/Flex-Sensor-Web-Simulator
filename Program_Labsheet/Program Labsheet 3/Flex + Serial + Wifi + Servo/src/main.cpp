@@ -1,3 +1,4 @@
+﻿#include <Arduino.h>
 /**
  * ============================================================
  *  Program Labsheet 3: Flex + Serial + Wifi + Servo
@@ -14,7 +15,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ESP32Servo.h>
-#include <Preferences.h>
+
 
 #define FLEX_A_PIN       34  // Pin ADC untuk Sensor Flex A
 #define FLEX_B_PIN       35  // Pin ADC untuk Sensor Flex B
@@ -25,13 +26,13 @@
 #define WIFI_PASSWORD    "PASSWORD_WIFI"
 #define MDNS_NAME        "flex-kelompok1"
 
-Preferences preferences;
+
 
 // Kalibrasi ADC default
-int flexA_min = 3040;
-int flexA_max = 2800;
-int flexB_min = 3040;
-int flexB_max = 2800;
+int flexA_min = 3054;
+int flexA_max = 2766;
+int flexB_min = 3054;
+int flexB_max = 2766;
 
 WebServer server(80);
 Servo myServo;
@@ -81,12 +82,7 @@ void handleSetConfig() {
     flexB_min = minB;
     flexB_max = maxB;
     
-    preferences.begin("calib", false);
-    preferences.putInt("minA", flexA_min);
-    preferences.putInt("maxA", flexA_max);
-    preferences.putInt("minB", flexB_min);
-    preferences.putInt("maxB", flexB_max);
-    preferences.end();
+    
     
     Serial.println("System: Calibration updated via Web!");
     server.send(200, "text/plain", "OK");
@@ -101,12 +97,7 @@ void setup() {
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Load kalibrasi
-    preferences.begin("calib", false);
-    flexA_min = preferences.getInt("minA", 1320);
-    flexA_max = preferences.getInt("maxA", 1198);
-    flexB_min = preferences.getInt("minB", 1320);
-    flexB_max = preferences.getInt("maxB", 1198);
-    preferences.end();
+    
 
     // Konfigurasi Servo
     myServo.attach(SERVO_PIN);
@@ -141,14 +132,14 @@ void loop() {
     int rawA = analogRead(FLEX_A_PIN);
     int rawB = analogRead(FLEX_B_PIN);
     
-    // ── 1. Update Posisi Servo Fisik ─────────────────────────────────────────
+    // â”€â”€ 1. Update Posisi Servo Fisik â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
     if (angle != lastAngle) {
         myServo.write(180 - angle); // Inversi hardware servo fisik
         lastAngle = angle;
     }
     
-    // ── 2. Kirim Stream JSON untuk Web Serial USB (Setiap 20ms) ───────────────
+    // â”€â”€ 2. Kirim Stream JSON untuk Web Serial USB (Setiap 20ms) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     unsigned long now = millis();
     if (now - lastSerialUpdate >= 20) {
         lastSerialUpdate = now;
@@ -174,7 +165,7 @@ void loop() {
         return json.substring(start, end).toInt();
     };
 
-    // ── 3. Terima Perintah Kalibrasi Baru dari Web Serial ────────────────────
+    // â”€â”€ 3. Terima Perintah Kalibrasi Baru dari Web Serial â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     while (Serial.available()) {
         String line = Serial.readStringUntil('\n');
         line.trim();
@@ -185,12 +176,7 @@ void loop() {
             flexB_min = parseVal(json, "minB", flexB_min);
             flexB_max = parseVal(json, "maxB", flexB_max);
             
-            preferences.begin("calib", false);
-            preferences.putInt("minA", flexA_min);
-            preferences.putInt("maxA", flexA_max);
-            preferences.putInt("minB", flexB_min);
-            preferences.putInt("maxB", flexB_max);
-            preferences.end();
+            
             Serial.println("System: Calibration updated via Serial!");
         }
     }

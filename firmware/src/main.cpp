@@ -46,13 +46,13 @@
 // LCD I2C: SDA = GPIO 21, SCL = GPIO 22 (default Arduino ESP32)
 
 // ── Flex Sensor Calibration variables (initially loaded from Preferences) ────
-#include <Preferences.h>
-Preferences preferences;
 
-int flexA_min = 3040;  // ADC saat lurus (0%)
-int flexA_max = 2800;  // ADC saat bengkok (100%)
-int flexB_min = 3040;
-int flexB_max = 2800;
+
+
+int flexA_min = 3054;  // ADC saat lurus (0°)  — diukur dari sensor
+int flexA_max = 2766;  // ADC saat bengkok 180° — = 3054 - 2*(3054-2910)
+int flexB_min = 3054;
+int flexB_max = 2766;
 
 int rgb_green_threshold  = 1260; // Dihitung dinamis: minA - 50% delta
 int rgb_yellow_threshold = 1210; // Dihitung dinamis: minA - 90% delta
@@ -73,8 +73,8 @@ int rgb_yellow_threshold = 1210; // Dihitung dinamis: minA - 90% delta
 // Ambang batas warna sekarang otomatis ter-update saat kalibrasi disinkronkan.
 
 // ── Sampling ──────────────────────────────────────────────────────────────────
-#define SAMPLE_COUNT          20     // Jumlah sampel moving average
-#define SENSOR_INTERVAL_MS    5      // Interval baca sensor (ms)
+#define SAMPLE_COUNT          10     // Jumlah sampel moving average – ubah nilai ini untuk eksperimen (default 10)
+#define SENSOR_INTERVAL_MS    20      // Interval baca sensor (ms) – slower sampling for stability
 #define SERIAL_INTERVAL_MS    50     // Interval print serial human-readable (ms)
 #define SERIAL_JSON_INTERVAL_MS 20   // Interval output JSON ke Web Serial API (ms)
 #define LCD_INTERVAL_MS       100    // Interval update LCD (ms)
@@ -141,16 +141,27 @@ void initRingBuffer() {
 }
 
 /** Baca satu sampel baru dan perbarui rata-rata (non-blocking) */
+#define FLEX_B_ENABLED 0 // 1 = read Flex B (when wired), 0 = ignore (pin unconnected)
+
 void updateFlexReadings() {
+    // ------- Flex A (always used) -------
     totalA -= readingsA[readIndex];
-    totalB -= readingsB[readIndex];
     readingsA[readIndex] = analogRead(FLEX_A_PIN);
-    readingsB[readIndex] = analogRead(FLEX_B_PIN);
     totalA += readingsA[readIndex];
-    totalB += readingsB[readIndex];
-    readIndex = (readIndex + 1) % SAMPLE_COUNT;
     flexA = (int)(totalA / SAMPLE_COUNT);
+
+#if FLEX_B_ENABLED
+    // ------- Flex B (optional) -------
+    totalB -= readingsB[readIndex];
+    readingsB[readIndex] = analogRead(FLEX_B_PIN);
+    totalB += readingsB[readIndex];
     flexB = (int)(totalB / SAMPLE_COUNT);
+#else
+    // When Flex B is not connected, keep a stable dummy value
+    flexB = 0;
+#endif
+
+    readIndex = (readIndex + 1) % SAMPLE_COUNT;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,21 +207,20 @@ int lastServoAngle = -1;
  *  Bengkok maks→ 180 derajat
  */
 int getServoAngle(int adcVal) {
-    int flexA_mid = flexA_min - (int)((flexA_min - flexA_max) * 0.65);
-    if (adcVal >= flexA_mid) {
-        return mapClamped(adcVal, flexA_min, flexA_mid, 0, 90);
-    } else {
-        return mapClamped(adcVal, flexA_mid, flexA_max, 90, 180);
-    }
+    // Simplified linear mapping: 0° at flexA_min (straight), 180° at flexA_max (fully bent)
+    // This makes the servo point to ~90° when the flex sensor reading is roughly halfway between min and max.
+    return mapClamped(adcVal, flexA_min, flexA_max, 0, 180);
 }
 
 /** Perbarui posisi servo berdasarkan Flex A */
 void updateServo() {
     int angle = getServoAngle(flexA);
-    if (angle != lastServoAngle) {
-        myServo.write(180 - angle); // Hardware inverted (reversed ruler)
-        lastServoAngle = angle;
+    const int HYSTERESIS_DEG = 2; // ignore changes smaller than 2°
+    if (abs(angle - lastServoAngle) < HYSTERESIS_DEG) {
+        return; // keep previous position
     }
+    myServo.write(180 - angle); // Servo fisik terbalik: 0°=kiri, 180°=kanan
+    lastServoAngle = angle;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,12 +327,7 @@ void handleSetConfig() {
     rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
     rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
     
-    preferences.begin("calib", false);
-    preferences.putInt("minA", flexA_min);
-    preferences.putInt("maxA", flexA_max);
-    preferences.putInt("minB", flexB_min);
-    preferences.putInt("maxB", flexB_max);
-    preferences.end();
+    
     
     Serial.println("System: Calibration updated via Web!");
     server.send(200, "text/plain", "OK");
@@ -360,29 +365,7 @@ void setup() {
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
 
     // ── Load stored calibration ──────────────────────────────────────────────
-    preferences.begin("calib", false);
-    flexA_min = preferences.getInt("minA", 3040);
-    flexA_max = preferences.getInt("maxA", 2800);
-    flexB_min = preferences.getInt("minB", 3040);
-    flexB_max = preferences.getInt("maxB", 2800);
     
-    // Jika memori flash masih menyimpan nilai kalibrasi lama (< 2000), timpa paksa ke 3040-2800
-    if (flexA_min < 2000) {
-        flexA_min = 3040;
-        flexA_max = 2800;
-        flexB_min = 3040;
-        flexB_max = 2800;
-        preferences.putInt("minA", 3040);
-        preferences.putInt("maxA", 2800);
-        preferences.putInt("minB", 3040);
-        preferences.putInt("maxB", 2800);
-        Serial.println("System: Stored preferences detected old range. Force updated to 3040-2800!");
-    }
-    
-    int deltaA = flexA_min - flexA_max;
-    rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
-    rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
-    preferences.end();
 
     // ── LED pins ─────────────────────────────────────────────────────────────
     pinMode(LED_RED_PIN,    OUTPUT);
@@ -482,12 +465,7 @@ void loop() {
             rgb_green_threshold = flexA_min - (int)(deltaA * 0.50);
             rgb_yellow_threshold = flexA_min - (int)(deltaA * 0.90);
             
-            preferences.begin("calib", false);
-            preferences.putInt("minA", flexA_min);
-            preferences.putInt("maxA", flexA_max);
-            preferences.putInt("minB", flexB_min);
-            preferences.putInt("maxB", flexB_max);
-            preferences.end();
+            
             Serial.println("System: Calibration updated via Serial!");
         }
     }
