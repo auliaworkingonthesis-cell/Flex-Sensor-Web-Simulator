@@ -315,11 +315,20 @@ function initSimulator() {
   if ('graphAudio' in savedModules) refs.graphAudioToggle.checked = savedModules.graphAudio;
   if ('flasher'    in savedModules) refs.flasherToggle.checked    = savedModules.flasher;
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const showFlasher = urlParams.has('admin') || urlParams.has('flasher');
+  
+  // Hide flasher module card physically by default if not admin/flasher parameter
+  const flasherCard = document.querySelector('[data-module-card="flasher"]');
+  if (flasherCard && !showFlasher) {
+    flasherCard.style.setProperty('display', 'none', 'important');
+  }
+
   const modules = {
     servo: refs.servoToggle.checked,
     gripper: refs.gripperToggle.checked,
     graphAudio: refs.graphAudioToggle.checked,
-    flasher: refs.flasherToggle.checked,
+    flasher: showFlasher ? refs.flasherToggle.checked : false,
   };
 
   let voiceEnabled = false;
@@ -680,12 +689,19 @@ function initSimulator() {
     modules.servo = refs.servoToggle.checked;
     modules.gripper = refs.gripperToggle.checked;
     modules.graphAudio = refs.graphAudioToggle.checked;
-    modules.flasher = refs.flasherToggle.checked;
+    modules.flasher = showFlasher ? refs.flasherToggle.checked : false;
     document.querySelector('[data-module-card="servo"]').classList.toggle('module-off', !modules.servo);
     document.querySelector('[data-module-card="gripper"]').classList.toggle('module-off', !modules.gripper);
     document.querySelector('[data-module-card="graphAudio"]').classList.toggle('module-off', !modules.graphAudio);
     document.querySelector('[data-module-card="flasher"]').classList.toggle('module-off', !modules.flasher);
-    refs.activeModules.textContent = Object.values(modules).filter(Boolean).length;
+    
+    // Count active modules, excluding flasher if hidden
+    const visibleActiveCount = Object.keys(modules)
+      .filter(key => key !== 'flasher' || showFlasher)
+      .map(key => modules[key])
+      .filter(Boolean).length;
+      
+    refs.activeModules.textContent = visibleActiveCount;
   }
 
   [refs.servoToggle, refs.gripperToggle, refs.graphAudioToggle, refs.flasherToggle].forEach((toggle) => {
