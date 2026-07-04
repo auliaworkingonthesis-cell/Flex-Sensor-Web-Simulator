@@ -632,7 +632,8 @@ h1 {
 
 .settings-grid input,
 .settings-grid select,
-.rule-row input {
+.rule-row input,
+.rule-row select {
   min-width: 0;
   width: 100%;
   min-height: 28px;
@@ -731,7 +732,7 @@ h1 {
 }
 
 .rule-row {
-  grid-template-columns: 58px 58px minmax(80px, 1fr) auto;
+  grid-template-columns: 50px 50px 65px minmax(80px, 1fr) auto;
   align-items: center;
 }
 

@@ -697,35 +697,101 @@ function initSimulator() {
     const container = $(containerId);
     container.innerHTML = '';
     rules.forEach((rule, index) => {
+      if (!rule.type) rule.type = 'tts';
+
       const row = document.createElement('div');
       row.className = 'rule-row';
       row.innerHTML = `
         <input type="number" value="${rule.min}" aria-label="${sensorLabel} min suara" />
         <input type="number" value="${rule.max}" aria-label="${sensorLabel} max suara" />
-        <input type="text" value="${rule.text}" aria-label="${sensorLabel} text suara" />
-        <button class="mini-action" type="button">Hapus</button>
+        <select aria-label="${sensorLabel} tipe feedback" style="background:#08090a; color:#fff; border:1px solid var(--line); border-radius:7px; min-height:28px;">
+          <option value="tts" ${rule.type === 'tts' ? 'selected' : ''}>TTS</option>
+          <option value="audio" ${rule.type === 'audio' ? 'selected' : ''}>Audio</option>
+        </select>
+        <div class="feedback-container" style="display: flex; gap: 4px; align-items: center; min-width: 0; width: 100%;">
+          <input type="text" class="tts-input" value="${rule.text || ''}" placeholder="Teks TTS" style="display: ${rule.type === 'tts' ? 'block' : 'none'}; width: 100%; min-height: 28px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 7px; color: var(--text); background: #08090a;" />
+          <div class="audio-input-wrapper" style="display: ${rule.type === 'audio' ? 'flex' : 'none'}; gap: 4px; align-items: center; min-width: 0; width: 100%;">
+            <button class="mini-action upload-btn" type="button" style="padding: 2px 6px; font-size: 11px; flex-shrink: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--line); border-radius: 5px; color: #fff; cursor: pointer;">Upload</button>
+            <input type="file" class="audio-file-input" accept="audio/*" style="display: none;" />
+            <span class="audio-name" style="font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;" title="${rule.audioName || 'Belum ada file'}">${rule.audioName || 'Belum ada file'}</span>
+            <button class="mini-action play-preview-btn" type="button" style="display: ${rule.audioData ? 'inline-block' : 'none'}; padding: 2px 4px; font-size: 10px; flex-shrink: 0; background: rgba(56, 213, 232, 0.2); border: 1px solid rgb(56, 213, 232); border-radius: 5px; color: rgb(56, 213, 232); cursor: pointer;">▶</button>
+          </div>
+        </div>
+        <button class="mini-action" type="button" style="background: rgba(255, 51, 51, 0.2); border: 1px solid rgb(255, 51, 51); border-radius: 5px; color: rgb(255, 51, 51); padding: 4px 8px; cursor: pointer;">Hapus</button>
       `;
-      const [minInput, maxInput, textInput, deleteButton] = row.children;
+
+      const [minInput, maxInput, typeSelect, feedbackContainer, deleteButton] = row.children;
+      const ttsInput = feedbackContainer.querySelector('.tts-input');
+      const audioWrapper = feedbackContainer.querySelector('.audio-input-wrapper');
+      const uploadBtn = audioWrapper.querySelector('.upload-btn');
+      const fileInput = audioWrapper.querySelector('.audio-file-input');
+      const audioName = audioWrapper.querySelector('.audio-name');
+      const playPreviewBtn = audioWrapper.querySelector('.play-preview-btn');
+
       minInput.addEventListener('input', () => {
         rule.min = numeric(minInput.value);
         saveSettings(settings);
         target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
       });
+
       maxInput.addEventListener('input', () => {
         rule.max = numeric(maxInput.value);
         saveSettings(settings);
         target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
       });
-      textInput.addEventListener('input', () => {
-        rule.text = textInput.value;
+
+      typeSelect.addEventListener('change', () => {
+        rule.type = typeSelect.value;
+        saveSettings(settings);
+        ttsInput.style.display = rule.type === 'tts' ? 'block' : 'none';
+        audioWrapper.style.display = rule.type === 'audio' ? 'flex' : 'none';
+        target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+      });
+
+      ttsInput.addEventListener('input', () => {
+        rule.text = ttsInput.value;
         saveSettings(settings);
         target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
       });
+
+      uploadBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          rule.audioData = evt.target.result;
+          rule.audioName = file.name;
+          saveSettings(settings);
+          audioName.textContent = file.name;
+          audioName.title = file.name;
+          playPreviewBtn.style.display = 'inline-block';
+          target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      playPreviewBtn.addEventListener('click', () => {
+        if (rule.audioData) {
+          try {
+            const preview = new Audio(rule.audioData);
+            preview.play();
+          } catch (err) {
+            console.error("Gagal putar preview", err);
+          }
+        }
+      });
+
       deleteButton.addEventListener('click', () => {
         rules.splice(index, 1);
         saveSettings(settings);
         renderAudioRules();
       });
+
       container.appendChild(row);
     });
   }
@@ -748,6 +814,51 @@ function initSimulator() {
     renderAudioRules();
   });
   renderAudioRules();
+
+  let lastRuleId = null;
+  let lastAudioPlayAt = 0;
+
+  function handleAudioFeedback(flexA, flexB, settings) {
+    if (!voiceEnabled || !modules.graphAudio) return;
+    const now = performance.now();
+    
+    // Find active rules
+    const activeRuleA = settings.audio.flexARules.find(r => flexA >= numeric(r.min) && flexA <= numeric(r.max));
+    const activeRuleB = settings.audio.flexBRules.find(r => flexB >= numeric(r.min) && flexB <= numeric(r.max));
+    
+    const activeRules = [activeRuleA, activeRuleB].filter(Boolean);
+    if (activeRules.length === 0) return;
+    
+    // Process first active rule
+    const activeRule = activeRules[0];
+    const ruleId = `${activeRule.min}_${activeRule.max}_${activeRule.type || 'tts'}_${activeRule.text || ''}_${activeRule.audioName || ''}`;
+    
+    if (ruleId === lastRuleId && now - lastAudioPlayAt < 1500) return;
+    
+    lastRuleId = ruleId;
+    lastAudioPlayAt = now;
+    
+    if (activeRule.type === 'audio' && activeRule.audioData) {
+      try {
+        if ('speechSynthesis' in window) speechSynthesis.cancel();
+        const snd = new Audio(activeRule.audioData);
+        snd.play();
+        refs.voiceStatus.textContent = `Playing: ${activeRule.audioName}`;
+      } catch (err) {
+        console.error("Gagal memutar audio", err);
+      }
+    } else {
+      const text = activeRule.text;
+      if (text && 'speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 1;
+        speechSynthesis.speak(utterance);
+        refs.voiceStatus.textContent = text;
+      }
+    }
+  }
 
   function speak(text, force = false) {
     if (!text || !voiceEnabled || !modules.graphAudio || !('speechSynthesis' in window)) return;
@@ -847,7 +958,7 @@ function initSimulator() {
       graph.push({ flexA: current.flexA, flexB: current.flexB });
       graph.shift();
       drawChart();
-      speak(target.phrase);
+      handleAudioFeedback(current.flexA, current.flexB, settings);
       lastGraphAt = time;
     }
 
