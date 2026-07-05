@@ -10,43 +10,22 @@
 #include <ESP32Servo.h>
 #include <LiquidCrystal_I2C.h>
 
-#ifndef FLEX_B_PIN
-#define FLEX_B_PIN 35
-#endif
-
-#ifndef USE_FLEX_A_FOR_SERVO
-#define USE_FLEX_A_FOR_SERVO true
-#endif
-
-// Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
-int readAverage(int pin) {
-    long sum = 0;
-    for (int i = 0; i < 10; i++) {
-        sum += analogRead(pin);
-        delayMicroseconds(50);
-    }
-    return sum / 10;
-}
-
-
-#define FLEX_A_PIN      34  // Pin ADC untuk Sensor Flex A
-#define FLEX_B_PIN      35  // Pin ADC untuk Sensor Flex B
+#define FLEX_A_PIN       34  // Pin ADC untuk Sensor Flex A
+#define FLEX_B_PIN       35  // Pin ADC untuk Sensor Flex B
 #define SERVO_PIN        18  // Pin PWM untuk Servo Motor
+#define LED_RED_PIN      25  // LED Merah
+#define LED_YELLOW_PIN   26  // LED Kuning
+#define LED_GREEN_PIN    27  // LED Hijau
 
 // Konfigurasi Input Kontrol Servo
 // Set ke true jika Servo dikendalikan Flex A, set ke false untuk Flex B
 #define USE_FLEX_A_FOR_SERVO  true
-#define LED_RED_PIN      25  // LED Merah
-#define LED_YELLOW_PIN   26  // LED Kuning
-#define LED_GREEN_PIN    27  // LED Hijau
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
 #define FLEX_A_MIN  2930
 #define FLEX_A_MAX  2630
 #define FLEX_B_MIN  2930
 #define FLEX_B_MAX  2630
-#define FLEX_B_MIN  3000
-#define FLEX_B_MAX  2700
 
 // Threshold LED
 #define THRESHOLD_GREEN   2910
@@ -59,6 +38,16 @@ int lastAngle = -1;
 unsigned long lastServoUpdate = 0;
 unsigned long lastLcdUpdate = 0;
 
+// Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
+int readAverage(int pin) {
+    long sum = 0;
+    for (int i = 0; i < 10; i++) {
+        sum += analogRead(pin);
+        delayMicroseconds(50);
+    }
+    return sum / 10;
+}
+
 void setLed(bool r, bool y, bool g) {
     digitalWrite(LED_RED_PIN,    r ? HIGH : LOW);
     digitalWrite(LED_YELLOW_PIN, y ? HIGH : LOW);
@@ -69,7 +58,6 @@ void setup() {
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
-    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Konfigurasi pin LED sebagai OUTPUT
@@ -100,7 +88,6 @@ void loop() {
         int activeADC = USE_FLEX_A_FOR_SERVO ? rawADC : rawADC_B;
         
         // Gerakkan Servo Motor
-        int activeADC = USE_FLEX_A_FOR_SERVO ? rawADC : rawADC_B;
         int flexMin = USE_FLEX_A_FOR_SERVO ? FLEX_A_MIN : FLEX_B_MIN;
         int flexMax = USE_FLEX_A_FOR_SERVO ? FLEX_A_MAX : FLEX_B_MAX;
         
@@ -115,7 +102,6 @@ void loop() {
         }
         
         // Nyalakan Lampu LED
-        int activeADC = USE_FLEX_A_FOR_SERVO ? rawADC : rawADC_B;
         if (activeADC >= THRESHOLD_GREEN) {
             setLed(false, false, true);   // Hijau
         } 
