@@ -11,6 +11,7 @@
 #include <LiquidCrystal_I2C.h>
 
 #define FLEX_A_PIN      34  // Pin ADC untuk Sensor Flex A
+#define FLEX_B_PIN      35  // Pin ADC untuk Sensor Flex B
 #define SERVO_PIN        18  // Pin PWM untuk Servo Motor
 #define LED_RED_PIN      25  // LED Merah
 #define LED_YELLOW_PIN   26  // LED Kuning
@@ -41,6 +42,7 @@ void setup() {
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
+    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Konfigurasi pin LED sebagai OUTPUT
     pinMode(LED_RED_PIN,    OUTPUT);
@@ -66,6 +68,7 @@ void loop() {
         lastServoUpdate = now;
         
         int rawADC = analogRead(FLEX_A_PIN);
+        int rawADC_B = analogRead(FLEX_B_PIN);
         
         // Gerakkan Servo Motor
         int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
@@ -93,25 +96,33 @@ void loop() {
         if (now - lastLcdUpdate >= 200) {
             lastLcdUpdate = now;
             
-            // Baris 0: Nilai ADC
+            // Estimasi tegangan (ESP32 ADC Vref ~ 3.3V, atau 3.465V linear attenuation)
+            float voltA = (rawADC * 3.465) / 4095.0;
+            float voltB = (rawADC_B * 3.465) / 4095.0;
+            
+            // Baris 0: Flex A ADC
             lcd.setCursor(0, 0);
-            lcd.print("ADC Val : ");
+            lcd.print("Flex A  : ");
             lcd.print(rawADC);
             lcd.print("    ");
             
-            // Baris 1: Sudut Servo
+            // Baris 1: Flex B ADC
             lcd.setCursor(0, 1);
-            lcd.print("Servo   : ");
-            lcd.print(angle);
-            lcd.print(" deg ");
+            lcd.print("Flex B  : ");
+            lcd.print(rawADC_B);
+            lcd.print("    ");
             
-            // Baris 2: Status Trainer
+            // Baris 2: Tegangan Flex A
             lcd.setCursor(0, 2);
-            lcd.print("Trainer : READY ");
+            lcd.print("Volt A  : ");
+            lcd.print(voltA, 2);
+            lcd.print(" V  ");
             
-            // Baris 3: Kosong
+            // Baris 3: Tegangan Flex B
             lcd.setCursor(0, 3);
-            lcd.print("                ");
+            lcd.print("Volt B  : ");
+            lcd.print(voltB, 2);
+            lcd.print(" V  ");
         }
     }
 }
