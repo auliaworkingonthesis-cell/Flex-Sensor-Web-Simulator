@@ -84,3 +84,46 @@ Dokumen ini berisi daftar kendala teknis (troubles) yang sering ditemui selama p
 2. **Gunakan Wi-Fi 2.4 GHz:** ESP32 tidak dapat mendeteksi atau terhubung ke sinyal Wi-Fi 5 GHz. Ubah pengaturan router atau gunakan Wi-Fi Hotspot dari smartphone (Tethering) yang diatur pada band 2.4 GHz.
 3. **Gunakan IP Address Langsung (Solusi mDNS Error):** Jika nama mDNS `.local` tidak bisa dibuka, buka Serial Monitor terlebih dahulu untuk melihat IP Address lokal yang didapatkan ESP32 (misal: `192.168.1.15`). Masukkan alamat IP tersebut langsung ke kolom koneksi Web Simulator untuk bypass mDNS.
 4. **Bypass AP Isolation:** Jaringan Wi-Fi sekolah/kampus sering kali mengaktifkan proteksi keamanan *AP Isolation* sehingga laptop tidak bisa membaca data dari ESP32. Solusi termudah adalah menggunakan **Hotspot Seluler dari HP** sebagai pemancar Wi-Fi untuk menghubungkan laptop dan ESP32.
+
+---
+
+## ⚡ 7. ESP32 Mengalami Bootloop / Reset Berulang Kali
+
+| Detail Kendala | Penjelasan |
+| :--- | :--- |
+| **Gejala Fisik** | ESP32 terus menerus melakukan restart secara acak (terlihat di Serial Monitor: teks bootloader muncul berulang-ulang), atau mati mendadak saat servo mulai bergerak. |
+| **Penyebab Utama** | Daya arus listrik dari port USB laptop/komputer terlalu lemah (khususnya port USB 2.0 yang hanya menyuplai arus 500mA), kabel USB memiliki hambatan dalam yang besar, atau beban motor servo menarik arus melebihi kemampuan catu daya USB laptop. |
+
+### 🛠️ Solusi Teknis:
+1. **Gunakan Port USB 3.0:** Hubungkan kabel USB ESP32 ke port USB berwarna biru (USB 3.0) di laptop yang memiliki daya suplai arus lebih besar (hingga 900mA+).
+2. **Gunakan Adaptor Charger HP Eksternal:** Hubungkan board trainer ke charger HP 5V USB (minimal 1A - 2A) yang dicolokkan ke stopkontak dinding untuk menyuplai daya, bukan dari port USB laptop.
+3. **Ganti Kabel USB:** Gunakan kabel USB yang lebih tebal dan pendek untuk meminimalkan penurunan tegangan (*voltage drop*).
+
+---
+
+## 📥 8. Gagal Upload Program (Failed to Connect to ESP32)
+
+| Detail Kendala | Penjelasan |
+| :--- | :--- |
+| **Gejala Fisik** | Proses uploading di VS Code/PlatformIO berhenti di tulisan `Connecting...` lalu menampilkan error `A fatal error occurred: Failed to connect to ESP32: No serial data received.`. |
+| **Penyebab Utama** | Chip ESP32 tidak dapat masuk ke mode bootloader secara otomatis karena rangkaian kapasitor pada pin reset (EN) di board devkit mengalami kendala/keterlambatan sinyal sinkronisasi dari chip UART. |
+
+### 🛠️ Solusi Teknis:
+1. **Gunakan Tombol BOOT Manual:** Saat konsol di VS Code/PlatformIO menampilkan status `Connecting...` (diikuti tanda titik-titik `...___...`), tekan dan tahan tombol **BOOT** (atau **IO0**) pada board ESP32. Lepaskan tombol tersebut segera setelah proses penulisan flash (`Writing at...`) dimulai.
+2. **Gunakan Kapasitor pada Pin EN (Solusi Permanen):** Solder kapasitor elektrolit kecil berukuran **10 µF** di antara pin **EN** dan **GND** pada board ESP32 untuk menunda tegangan naik sesaat sehingga ESP32 dapat masuk ke mode download otomatis tanpa harus menekan tombol BOOT secara manual.
+
+---
+
+## 📉 9. Nilai ADC Flex Sensor Selalu 0 (Flat) atau Selalu 4095 (Maksimal)
+
+| Detail Kendala | Penjelasan |
+| :--- | :--- |
+| **Gejala Fisik** | Nilai sensor Flex yang terbaca selalu statis di angka 0 (minimum) atau 4095 (maksimum), tidak merespon saat sensor ditekuk. |
+| **Penyebab Utama** | Kesalahan pada perakitan rangkaian pembagi tegangan (*voltage divider*). Sensor Flex adalah resistor variabel (resistansi berubah saat ditekuk) sehingga memerlukan resistor statis (misalnya resistor 10k Ohm) agar perubahannya dapat dibaca sebagai tegangan analog. Jika pin analog dibiarkan mengambang (*floating*), kabel terputus, atau resistor pembagi tegangan dipasang terbalik, nilai pembacaan akan menjadi tidak valid. |
+
+### 🛠️ Solusi Teknis:
+1. **Periksa Skema Pembagi Tegangan:** Pastikan rangkaian mengikuti skema berikut:
+   * Jalur **3.3V** terhubung ke salah satu kaki Sensor Flex.
+   * Kaki Sensor Flex yang satu lagi terhubung ke pin **Analog Input (GPIO 34/35)** DAN juga terhubung ke kaki **Resistor 10k Ohm**.
+   * Kaki **Resistor 10k Ohm** yang satunya lagi terhubung langsung ke **GND**.
+2. **Periksa Koneksi Kabel Jumper:** Pastikan kabel jumper yang menusuk ke pin ESP32 tidak longgar dan terhubung ke pin ADC yang tepat (GPIO 34 untuk Flex A, GPIO 35 untuk Flex B).
