@@ -17,7 +17,7 @@ Dokumen ini berisi daftar kendala teknis (troubles) yang sering ditemui selama p
 
 ---
 
-## 📺 2. Karakter Aeh / Kode "Cacing" pada Layar LCD I2C
+## 📺 2. Karakter Aneh / Kode "Cacing" pada Layar LCD I2C
 
 | Detail Kendala | Penjelasan |
 | :--- | :--- |
@@ -55,3 +55,32 @@ Dokumen ini berisi daftar kendala teknis (troubles) yang sering ditemui selama p
 1. **Pasang Kapasitor Filter (Hardware):** Hubungkan kapasitor non-polar (keramik/milar) berukuran **100 nF (0.1 µF)** secara paralel di dekat pin analog input ESP32 (hubungkan langsung di antara pin GPIO pembacaan Flex dan GND). Kapasitor ini berfungsi sebagai low-pass filter fisik untuk meredam noise frekuensi tinggi.
 2. **Gunakan Filtering Software (Penyaringan Nilai):** Terapkan teknik *Oversampling* atau *Moving Average Filter* di dalam kode program untuk merata-ratakan hasil pembacaan sebelum ditampilkan. 
    *(Catatan: Metode penyaringan rata-rata 20 sampel data ini sudah terintegrasi secara bawaan di dalam program Labsheet dan Firmware Kit agar data yang dikirim ke web selalu mulus).*
+
+---
+
+## 🔌 5. Serial (USB) Gagal Terkoneksi ke Web Simulator
+
+| Detail Kendala | Penjelasan |
+| :--- | :--- |
+| **Gejala Fisik** | Web Simulator menampilkan pesan "Connection failed" atau port ESP32 tidak terdeteksi saat tombol **Connect** ditekan. |
+| **Penyebab Utama** | Port serial ESP32 sedang dikunci/dipakai oleh aplikasi lain (seperti Serial Monitor di Arduino IDE atau VS Code/PlatformIO). Penyebab lainnya adalah kabel USB yang digunakan hanya kabel pengisian daya (*charge-only*) tanpa jalur data, atau driver chip USB-to-UART belum terinstal di laptop. |
+
+### 🛠️ Solusi Teknis:
+1. **Tutup Serial Monitor Lain:** Pastikan Serial Monitor di VS Code, PlatformIO, atau Arduino IDE sudah ditutup (closed/disconnected) sebelum menekan tombol **Connect via USB Serial** di Web Simulator. Satu port USB hanya bisa diakses oleh satu aplikasi dalam satu waktu.
+2. **Gunakan Kabel Data USB yang Benar:** Gunakan kabel USB yang mendukung transfer data (biasanya kabel bawaan smartphone atau kabel pemrograman khusus).
+3. **Instal Driver USB-to-UART:** Periksa chip interface USB pada board ESP32 (biasanya tipe CP2102 atau CH340). Download dan instal driver resminya di laptop agar port COM terdeteksi di Device Manager.
+
+---
+
+## 📶 6. Wi-Fi ESP32 Gagal Terhubung / Web Simulator Tidak Dapat Mengakses ESP32
+
+| Detail Kendala | Penjelasan |
+| :--- | :--- |
+| **Gejala Fisik** | ESP32 tidak mendapatkan alamat IP (LED berkedip terus) atau Web Simulator tidak bisa terhubung via nama mDNS (`flex-kelompok1.local`). |
+| **Penyebab Utama** | Nama SSID/Password Wi-Fi pada kode salah, jaringan Wi-Fi menggunakan frekuensi 5 GHz (ESP32 hanya mendukung 2.4 GHz), router mengaktifkan fitur *AP Isolation* (yang memblokir komunikasi antar perangkat lokal), atau browser/laptop tidak mendukung mDNS lokal. |
+
+### 🛠️ Solusi Teknis:
+1. **Pastikan Jaringan Wi-Fi Sama:** Laptop dan ESP32 harus terhubung ke Wi-Fi Access Point yang **sama persis**.
+2. **Gunakan Wi-Fi 2.4 GHz:** ESP32 tidak dapat mendeteksi atau terhubung ke sinyal Wi-Fi 5 GHz. Ubah pengaturan router atau gunakan Wi-Fi Hotspot dari smartphone (Tethering) yang diatur pada band 2.4 GHz.
+3. **Gunakan IP Address Langsung (Solusi mDNS Error):** Jika nama mDNS `.local` tidak bisa dibuka, buka Serial Monitor terlebih dahulu untuk melihat IP Address lokal yang didapatkan ESP32 (misal: `192.168.1.15`). Masukkan alamat IP tersebut langsung ke kolom koneksi Web Simulator untuk bypass mDNS.
+4. **Bypass AP Isolation:** Jaringan Wi-Fi sekolah/kampus sering kali mengaktifkan proteksi keamanan *AP Isolation* sehingga laptop tidak bisa membaca data dari ESP32. Solusi termudah adalah menggunakan **Hotspot Seluler dari HP** sebagai pemancar Wi-Fi untuk menghubungkan laptop dan ESP32.
