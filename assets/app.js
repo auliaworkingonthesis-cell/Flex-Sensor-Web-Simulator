@@ -738,7 +738,7 @@ function initSimulator() {
             <button class="mini-action upload-btn" type="button" style="padding: 2px 6px; font-size: 11px; flex-shrink: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--line); border-radius: 5px; color: #fff; cursor: pointer;">Upload</button>
             <input type="file" class="audio-file-input" accept="audio/*" style="display: none;" />
             <span class="audio-name" style="font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;" title="${rule.audioName || 'Belum ada file'}">${rule.audioName || 'Belum ada file'}</span>
-            <button class="mini-action play-preview-btn" type="button" style="display: ${rule.audioData ? 'inline-block' : 'none'}; padding: 2px 4px; font-size: 10px; flex-shrink: 0; background: rgba(56, 213, 232, 0.2); border: 1px solid rgb(56, 213, 232); border-radius: 5px; color: rgb(56, 213, 232); cursor: pointer;">▶</button>
+            <button class="mini-action play-preview-btn" type="button" style="display: ${rule.audioData ? 'inline-block' : 'none'}; padding: 2px 4px; font-size: 10px; flex-shrink: 0; background: rgba(59, 130, 246, 0.2); border: 1px solid rgb(59, 130, 246); border-radius: 5px; color: rgb(59, 130, 246); cursor: pointer;">▶</button>
           </div>
         </div>
         <button class="mini-action" type="button" style="background: rgba(255, 51, 51, 0.2); border: 1px solid rgb(255, 51, 51); border-radius: 5px; color: rgb(255, 51, 51); padding: 4px 8px; cursor: pointer;">Hapus</button>
@@ -950,7 +950,7 @@ function initSimulator() {
       ctx.stroke();
     };
 
-    drawLine('flexA', '#38d5e8');
+    drawLine('flexA', '#3b82f6');
     drawLine('flexB', '#79e39f');
     ctx.fillStyle = '#8e959d';
     ctx.font = '12px Inter, system-ui, sans-serif';
