@@ -152,6 +152,7 @@ void loop() {
         int angle = USE_FLEX_A_FOR_SERVO ? 
                     mapClamped(rawA, flexA_min, flexA_max, 0, 180) :
                     mapClamped(rawB, flexB_min, flexB_max, 0, 180);
+        Serial.printf("Flex A: %d | Flex B: %d | Servo: %d deg\n", rawA, rawB, angle);
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
             lastAngle = angle;

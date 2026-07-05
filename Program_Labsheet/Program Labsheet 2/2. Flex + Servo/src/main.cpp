@@ -37,10 +37,8 @@ int readAverage(int pin) {
 #define USE_FLEX_A_FOR_SERVO  true
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  3054  // ADC lurus (0 derajat)
-#define FLEX_A_MAX  2766  // ADC bengkok maksimal (180 derajat)
-#define FLEX_B_MIN  3000
-#define FLEX_B_MAX  2700
+#define FLEX_A_MIN  1880
+#define FLEX_A_MAX  1720
 #define FLEX_B_MIN  3000
 #define FLEX_B_MAX  2700
 
@@ -50,6 +48,7 @@ unsigned long lastUpdate = 0;
 const unsigned long interval = 20; // Update servo setiap 20ms
 
 void setup() {
+    Serial.begin(115200);
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
@@ -78,6 +77,7 @@ void loop() {
         // Mapping ke sudut servo 0 s.d 180 derajat
         int angle = map(constrainedADC, flexMin, flexMax, 0, 180);
         
+        Serial.printf("Flex: %d | Servo: %d deg\n", rawADC, angle);
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
             lastAngle = angle;

@@ -42,6 +42,7 @@ unsigned long lastUpdate = 0;
 const unsigned long interval = 200; // Update LCD setiap 200ms
 
 void setup() {
+    Serial.begin(115200);
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
@@ -91,5 +92,6 @@ void loop() {
         
         lcd.setCursor(0, 3);
         lcd.print("Trainer : READY ");
+        Serial.printf("Flex A: %d | Flex B: %d | Volt A: %.2fV | Volt B: %.2fV\n", rawADC, rawADC_B, voltA, voltB);
     }
 }

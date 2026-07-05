@@ -64,6 +64,7 @@ void setLed(bool r, bool y, bool g) {
 }
 
 void setup() {
+    Serial.begin(115200);
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
@@ -96,6 +97,7 @@ void loop() {
         int constrainedADC = constrain(rawADC, lowLimit, highLimit);
         int angle = map(constrainedADC, flexMin, flexMax, 0, 180);
         
+        Serial.printf("Flex: %d | Servo: %d deg | LED: %s\n", rawADC, angle, (rawADC >= THRESHOLD_GREEN) ? "HIJAU" : ((rawADC >= THRESHOLD_YELLOW) ? "KUNING" : "MERAH"));
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
             lastAngle = angle;

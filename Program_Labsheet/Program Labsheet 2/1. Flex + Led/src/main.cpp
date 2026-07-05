@@ -48,6 +48,7 @@ void setLed(bool r, bool y, bool g) {
 }
 
 void setup() {
+    Serial.begin(115200);
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
@@ -68,6 +69,7 @@ void loop() {
         int rawADC = readAverage(FLEX_A_PIN);
         
         // Logika pemilihan LED yang menyala
+        Serial.printf("Flex A: %d | LED: %s\n", rawADC, (rawADC >= THRESHOLD_GREEN) ? "HIJAU" : ((rawADC >= THRESHOLD_YELLOW) ? "KUNING" : "MERAH"));
         if (rawADC >= THRESHOLD_GREEN) {
             setLed(false, false, true);   // Hijau aktif (Lurus)
         } 

@@ -22,8 +22,8 @@
 #define USE_FLEX_A_FOR_SERVO  true
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  2920
-#define FLEX_A_MAX  2680
+#define FLEX_A_MIN  1880
+#define FLEX_A_MAX  1720
 #define FLEX_B_MIN  2930
 #define FLEX_B_MAX  2630
 
@@ -55,6 +55,7 @@ void setLed(bool r, bool y, bool g) {
 }
 
 void setup() {
+    Serial.begin(115200);
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
