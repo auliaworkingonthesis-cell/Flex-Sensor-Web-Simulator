@@ -22,11 +22,11 @@
 // Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
 int readAverage(int pin) {
     long sum = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         sum += analogRead(pin);
         delayMicroseconds(50);
     }
-    return sum / 10;
+    return sum / 20;
 }
 
 
