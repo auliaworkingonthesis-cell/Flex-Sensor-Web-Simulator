@@ -17,8 +17,8 @@
 #define LED_GREEN_PIN    27  // LED Hijau
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  3054
-#define FLEX_A_MAX  2766
+#define FLEX_A_MIN  2930
+#define FLEX_A_MAX  2630
 
 // Threshold LED
 #define THRESHOLD_GREEN   2910
@@ -78,19 +78,15 @@ void loop() {
             lastAngle = angle;
         }
         
-        // Nyalakan Lampu LED & Tentukan Status
-        const char* statusStr = "";
+        // Nyalakan Lampu LED
         if (rawADC >= THRESHOLD_GREEN) {
             setLed(false, false, true);   // Hijau
-            statusStr = "Lurus  [Hijau]";
         } 
         else if (rawADC >= THRESHOLD_YELLOW) {
             setLed(false, true, false);   // Kuning
-            statusStr = "Tekuk  [Kuning]";
         } 
         else {
             setLed(true, false, false);   // Merah
-            statusStr = "Bengkok [Merah]";
         }
         
         // ── 2. Tampilkan Data di LCD 16x4 (Setiap 200ms) ──────────────────────
@@ -109,15 +105,13 @@ void loop() {
             lcd.print(angle);
             lcd.print(" deg ");
             
-            // Baris 2: Kondisi LED
+            // Baris 2: Status Trainer
             lcd.setCursor(0, 2);
-            lcd.print("Status  : ");
-            lcd.print(statusStr);
-            lcd.print("       ");
-            
-            // Baris 3: Status Trainer
-            lcd.setCursor(0, 3);
             lcd.print("Trainer : READY ");
+            
+            // Baris 3: Kosong
+            lcd.setCursor(0, 3);
+            lcd.print("                ");
         }
     }
 }
