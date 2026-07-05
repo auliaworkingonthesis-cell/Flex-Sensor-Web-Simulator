@@ -25,7 +25,7 @@ LCD I2C 16x4 berfungsi sebagai antarmuka output untuk menampilkan status sistem,
 | :--- | :--- | :--- |
 | LCD menyala (backlight aktif) tetapi tidak menampilkan karakter teks sama sekali. | Tingkat kontras layar terlalu rendah atau alamat alamat I2C pada kode program tidak tepat. | Putar trimpot berwarna biru di bagian belakang modul backpack I2C LCD menggunakan obeng minus kecil untuk mengatur kontras, dan jalankan program *I2C Scanner* untuk memastikan alamat I2C yang tepat (`0x27` atau `0x3F`). |
 | Layar LCD sama sekali tidak menyala (mati total). | Jalur kabel daya VCC dan GND tidak terhubung dengan benar ke pin sumber daya. | Periksa kembali koneksi kabel jumper daya, pastikan pin VCC LCD terhubung ke pin `VIN` / `5V` ESP32, dan pin GND LCD terhubung ke GND ESP32. |
-| Teks pada LCD muncul tetapi berupa karakter aneh, kotak-kotak hitam, atau kode acak. | Inisialisasi library gagal, library yang digunakan tidak sesuai, atau kabel SDA/SCL longgar. | Pastikan menggunakan library `LiquidCrystal_I2C` yang sesuai, periksa kekencangan kabel jumper pada pin SDA (GPIO 21) dan SCL (GPIO 22), lalu tekan tombol reset pada ESP32. |
+| Teks pada LCD muncul tetapi berupa karakter aneh, kotak-kokak hitam, atau kode acak. | Inisialisasi library gagal, library yang digunakan tidak sesuai, atau kabel SDA/SCL longgar. | Pastikan menggunakan library `LiquidCrystal_I2C` yang sesuai, periksa kekencangan kabel jumper pada pin SDA (GPIO 21) dan SCL (GPIO 22), lalu tekan tombol reset pada ESP32. |
 | Layar LCD berkedip terus-menerus (*flickering*). | Catu daya tegangan ke modul LCD tidak stabil atau mengalami penurunan (*drop*). | Pasang kapasitor decoupling sebesar 100 µF di antara jalur VCC and GND LCD untuk menstabilkan pasokan tegangan. |
 
 ---
@@ -36,7 +36,7 @@ Modul LED Traffic Light (Merah, Kuning, Hijau) digunakan sebagai indikator visua
 **Tabel 3. Troubleshooting LED Traffic Light**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
-| Lampu LED Traffic Light menyala sangat redup (kurang terang). | Level tegangan logika output (High) dari GPIO ESP32 hanya **3.3V**, sedangkan modul LED Traffic Light dirancang untuk bekerja optimal pada tegangan **5V**. | Hubungkan pin VCC modul LED ke pin `VIN` / `5V` ESP32 (yang mendapatkan daya USB 5V stabil) atau gunakan rangkaian driver transistor/level converter untuk menyuplai tegangan 5V penuh ke LED. |
+| Lampu LED Traffic Light menyala sangat redup (kurang terang). | Modul menggunakan konfigurasi *Common Cathode* (hanya ada pin R, Y, G, GND tanpa pin VCC). LED dinyalakan langsung oleh logika HIGH dari GPIO ESP32 yang hanya bertegangan **3.3V**, sementara resistor pembatas arus bawaan modul dirancang untuk tegangan **5V**. | 1. Gunakan modul **Logic Level Converter (Level Shifter 3.3V ke 5V)** di antara pin GPIO ESP32 dan pin R, Y, G modul LED agar sinyal output dinaikkan menjadi 5V.<br>2. Atau, modifikasi nilai resistor pembatas arus SMD pada modul LED (ganti resistor bawaan 330/220 Ohm dengan nilai yang lebih kecil seperti 100/47 Ohm) agar arus yang mengalir pada tegangan 3.3V menjadi lebih besar dan LED menyala terang. |
 | Lampu LED Traffic Light mati total meskipun nilai flex pada monitor berubah. | Kabel jumper terbalik antara pin data dan Ground, atau pin GPIO yang digunakan salah didefinisikan dalam kode program. | Periksa kembali kesesuaian pin data (GPIO 25, 26, 27), pastikan pin GND modul LED terhubung kuat ke GND ESP32, dan cek ketepatan nomor pin di kode program. |
 
 ---
@@ -48,7 +48,7 @@ Motor servo digunakan untuk mensimulasikan gerakan mekanik (sudut) berdasarkan k
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
 | Motor servo tidak bergerak sama sekali. | Pin sinyal PWM salah dihubungkan, kabel sinyal putus, atau tegangan VCC tidak mencukupi. | Cek koneksi pin sinyal PWM (GPIO 18), pastikan kabel terhubung erat, dan pastikan servo mendapatkan suplai daya 5V yang cukup dari pin `VIN` ESP32 atau sumber daya eksternal. |
-| Motor servo bergetar terus-menerus (*jitter*) atau tidak stabil di posisi tertentu. | Arus catu daya dari USB laptop kurang untuk menggerakkan motor servo. | Hubungkan kapasitor elektrolit (Elco) sebesar 100 µF - 1000 µF secara paralel pada jalur VCC dan GND servo, atau gunakan catu daya 5V eksternal yang terpisah dari laptop. |
+| Motor servo bergetar terus-menerus (*jitter*) atau tidak stabil di posisi tertentu. | Arus catu daya dari USB laptop kurang untuk menggerakkan motor servo. | Hubungkan kapasitor elektrolit (Elco) sebesar 100 µF - 1000 µF secara paralel pada jalur VCC and GND servo, atau gunakan catu daya 5V eksternal yang terpisah dari laptop. |
 | Servo bergerak tetapi sudut gerak tidak sesuai dengan sudut lekukan sensor flex. | Nilai pemetaan (*mapping*) sudut di dalam program tidak tepat. | Lakukan kalibrasi ulang nilai sudut batas bawah ($0^\circ$) dan batas atas ($180^\circ$) pada fungsi `map()` atau titik kalibrasi di program. |
 | Motor servo berbunyi mendengung secara terus-menerus (*buzzing*). | Servo dipaksa berputar melebihi batas sudut mekanis fisiknya. | Batasi nilai sudut maksimal pada program (jangan melebihi batas fisik servo, biasanya maksimal $180^\circ$). |
 
