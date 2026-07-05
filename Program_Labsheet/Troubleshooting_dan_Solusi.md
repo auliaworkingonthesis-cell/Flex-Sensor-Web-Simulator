@@ -1,129 +1,66 @@
-# Panduan Troubleshooting & Solusi: Trainer Kit Sensor Flex
+# F. Troubleshooting Komponen Training Kit
 
-Dokumen ini berisi daftar kendala teknis (troubles) yang sering ditemui selama perakitan dan pengujian Trainer Kit Sensor Flex beserta solusi praktisnya. Panduan ini disusun untuk membantu siswa SMK dan instruktur dalam mengatasi masalah hardware maupun software secara mandiri.
-
----
-
-## 🚦 1. LED / Traffic Light Kurang Terang (Redup)
-
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | LED pada modul Traffic Light menyala sangat redup atau tidak maksimal. |
-| **Penyebab Utama** | Level tegangan logika output (High) dari GPIO ESP32 hanya **3.3V**, sedangkan modul LED Traffic Light dirancang untuk bekerja optimal pada tegangan **5V**. Selain itu, arus maksimal dari pin GPIO ESP32 sangat terbatas (sekitar 12mA - 20mA). |
-
-### 🛠️ Solusi Teknis:
-1. **Gunakan Catu Daya Eksternal (External Power):** Hubungkan pin VCC modul LED ke sumber tegangan eksternal 5V (misalnya dari pin `5V` / `VIN` ESP32 yang terhubung ke adaptor USB stabil, bukan dari pin 3.3V).
-2. **Gunakan Driver Transistor / Level Shifter:** Jika modul LED memerlukan arus besar, gunakan rangkaian driver transistor (misal tipe NPN seperti BC547) atau modul *logic level converter* 3.3V ke 5V agar lampu LED menyala dengan kecerahan maksimal tanpa membebani pin GPIO ESP32.
+Bagian ini berisi daftar kendala teknis (*troubleshooting*) yang sering ditemui selama perakitan, pemrograman, dan pengujian komponen pada Kit Trainer Sensor Flex. Untuk mempermudah proses identifikasi masalah, panduan berikut dikelompokkan berdasarkan komponen dengan format tabel yang memuat **Gejala**, **Kemungkinan Penyebab**, dan **Solusi**.
 
 ---
 
-## 📺 2. Karakter Aneh / Kode "Cacing" pada Layar LCD I2C
+### 1. ESP32 DevKit V1 (Mikrokontroler)
+ESP32 merupakan komponen utama pengendali seluruh sistem pada kit trainer ini. Apabila ESP32 mengalami gangguan, seluruh sistem tidak akan dapat berjalan.
 
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | Layar LCD menampilkan karakter kotak-kotak hitam penuh, simbol aneh, atau teks acak yang tidak sesuai program. |
-| **Penyebab Utama** | Terjadi gangguan data (*glitch* atau *noise*) pada jalur komunikasi I2C (SDA di GPIO 21 & SCL di GPIO 22). Hal ini sering dipicu oleh koneksi kabel jumper yang longgar, induksi arus dari motor servo, atau kegagalan inisialisasi LCD saat pertama kali dinyalakan. |
-
-### 🛠️ Solusi Teknis:
-1. **Reset Board ESP32:** Tekan tombol **EN / RST** pada ESP32 untuk mengulang inisialisasi bus I2C dari awal.
-2. **Periksa Jalur Ground (GND):** Pastikan pin GND LCD terhubung sangat erat dan memiliki *common ground* (ground yang menyatu) dengan pin GND ESP32.
-3. **Atur Trimpot Kontras:** Putar potensiometer berwarna biru di bagian belakang modul backpack I2C LCD menggunakan obeng minus kecil untuk menyesuaikan kontras karakter hingga teks terlihat jelas.
+**Tabel 1. Troubleshooting ESP32 DevKit V1**
+| Gejala | Kemungkinan Penyebab | Solusi |
+| :--- | :--- | :--- |
+| Lampu power LED pada board ESP32 tidak menyala. | Kabel USB rusak, port USB komputer bermasalah, atau terjadi hubungan singkat (*short circuit*) pada board. | Ganti kabel USB, coba hubungkan ke port USB lain pada komputer, dan pastikan tidak ada kabel jumper yang salah pasang (saling bersentuhan). |
+| Program gagal diupload (*Failed to connect to ESP32*). | Driver USB-to-UART (CP210x atau CH340) belum terinstal, port COM salah dipilih, atau board telat masuk ke mode bootloader. | Install driver chip UART yang sesuai di komputer, pastikan memilih port COM yang tepat di VS Code/PlatformIO, dan tekan serta tahan tombol **BOOT** pada ESP32 saat proses upload menampilkan status `Connecting...`. |
+| Program berhasil terupload tetapi program tidak berjalan atau ESP32 mengalami *bootloop* (restart terus-menerus). | Arus dari port USB laptop/komputer kurang (khususnya port USB 2.0 yang hanya menyuplai 500mA), atau terdapat *short circuit* pada pin output. | Pindahkan koneksi ke port USB 3.0 (berwarna biru), gunakan adaptor charger HP eksternal (5V, 1A-2A), atau periksa kembali rangkaian kabel untuk memastikan tidak ada hubungan singkat. |
 
 ---
 
-## ⚙️ 3. Motor Servo Mengalami Jitter (Bergetar Terus-Menerus)
+### 2. LCD I2C 16x4
+LCD I2C 16x4 berfungsi sebagai antarmuka output untuk menampilkan status sistem, nilai flex, sudut, dan tegangan secara *real-time*.
 
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | Horn (lengan) servo bergetar, mengeluarkan suara mendengung (*buzzing*), atau bergerak tidak stabil saat mencapai sudut tertentu. |
-| **Penyebab Utama** | Fluktuasi tegangan catu daya (*voltage drop*). Ketika servo mulai berputar, ia menarik arus instan yang besar (*inrush current*). Jika catu daya tidak sanggup menyuplai arus secara cepat, tegangan VCC akan turun sesaat dan menyebabkan rangkaian kontroler di dalam servo mengalami *reset* atau kehilangan sinyal PWM yang stabil. |
-
-### 🛠️ Solusi Teknis:
-1. **Pasang Elco (Kapasitor Elektrolit):** Pasang kapasitor elektrolit (Elco) dengan ukuran **100 µF hingga 1000 µF (rating tegangan 10V/16V)** secara paralel pada jalur daya servo (kaki positif Elco ke pin VCC Servo, kaki negatif Elco ke pin GND Servo). Kapasitor ini berfungsi sebagai penyimpan cadangan energi lokal untuk menyuplai arus kejut servo.
-2. **Gunakan Sumber Daya 5V Terpisah:** Jangan menyuplai daya servo langsung dari pin 3.3V ESP32. Hubungkan pin VCC servo ke pin `VIN`/`5V` ESP32 yang terhubung ke adaptor USB minimal 2 Amper, atau gunakan power supply 5V eksternal dengan menggabungkan jalur ground-nya.
-
----
-
-## 📈 4. Pembacaan Sensor Flex Tidak Stabil / Nilai ADC Berfluktuasi
-
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | Nilai pembacaan ADC sensor Flex di Serial Monitor atau Web Simulator melompat-lompat dengan rentang yang lebar (misalnya dari 2800 tiba-tiba melompat ke 2950 meskipun sensor sedang diam). |
-| **Penyebab Utama** | Gangguan induksi elektromagnetik (*high-frequency noise*) dari lingkungan sekitar dan ketidakstabilan tegangan referensi ADC pada chip ESP32. |
-
-### 🛠️ Solusi Teknis:
-1. **Pasang Kapasitor Filter (Hardware):** Hubungkan kapasitor non-polar (keramik/milar) berukuran **100 nF (0.1 µF)** secara paralel di dekat pin analog input ESP32 (hubungkan langsung di antara pin GPIO pembacaan Flex dan GND). Kapasitor ini berfungsi sebagai low-pass filter fisik untuk meredam noise frekuensi tinggi.
-2. **Gunakan Filtering Software (Penyaringan Nilai):** Terapkan teknik *Oversampling* atau *Moving Average Filter* di dalam kode program untuk merata-ratakan hasil pembacaan sebelum ditampilkan. 
-   *(Catatan: Metode penyaringan rata-rata 20 sampel data ini sudah terintegrasi secara bawaan di dalam program Labsheet dan Firmware Kit agar data yang dikirim ke web selalu mulus).*
+**Tabel 2. Troubleshooting LCD I2C 16x4**
+| Gejala | Kemungkinan Penyebab | Solusi |
+| :--- | :--- | :--- |
+| LCD menyala (backlight aktif) tetapi tidak menampilkan karakter teks sama sekali. | Tingkat kontras layar terlalu rendah atau alamat alamat I2C pada kode program tidak tepat. | Putar trimpot berwarna biru di bagian belakang modul backpack I2C LCD menggunakan obeng minus kecil untuk mengatur kontras, dan jalankan program *I2C Scanner* untuk memastikan alamat I2C yang tepat (`0x27` atau `0x3F`). |
+| Layar LCD sama sekali tidak menyala (mati total). | Jalur kabel daya VCC dan GND tidak terhubung dengan benar ke pin sumber daya. | Periksa kembali koneksi kabel jumper daya, pastikan pin VCC LCD terhubung ke pin `VIN` / `5V` ESP32, dan pin GND LCD terhubung ke GND ESP32. |
+| Teks pada LCD muncul tetapi berupa karakter aneh, kotak-kotak hitam, atau kode acak. | Inisialisasi library gagal, library yang digunakan tidak sesuai, atau kabel SDA/SCL longgar. | Pastikan menggunakan library `LiquidCrystal_I2C` yang sesuai, periksa kekencangan kabel jumper pada pin SDA (GPIO 21) dan SCL (GPIO 22), lalu tekan tombol reset pada ESP32. |
+| Layar LCD berkedip terus-menerus (*flickering*). | Catu daya tegangan ke modul LCD tidak stabil atau mengalami penurunan (*drop*). | Pasang kapasitor decoupling sebesar 100 µF di antara jalur VCC dan GND LCD untuk menstabilkan pasokan tegangan. |
 
 ---
 
-## 🔌 5. Serial (USB) Gagal Terkoneksi ke Web Simulator
+### 3. Motor Servo
+Motor servo digunakan untuk mensimulasikan gerakan mekanik (sudut) berdasarkan kelengkungan sensor flex.
 
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | Web Simulator menampilkan pesan "Connection failed" atau port ESP32 tidak terdeteksi saat tombol **Connect** ditekan. |
-| **Penyebab Utama** | Port serial ESP32 sedang dikunci/dipakai oleh aplikasi lain (seperti Serial Monitor di Arduino IDE atau VS Code/PlatformIO). Penyebab lainnya adalah kabel USB yang digunakan hanya kabel pengisian daya (*charge-only*) tanpa jalur data, atau driver chip USB-to-UART belum terinstal di laptop. |
-
-### 🛠️ Solusi Teknis:
-1. **Tutup Serial Monitor Lain:** Pastikan Serial Monitor di VS Code, PlatformIO, atau Arduino IDE sudah ditutup (closed/disconnected) sebelum menekan tombol **Connect via USB Serial** di Web Simulator. Satu port USB hanya bisa diakses oleh satu aplikasi dalam satu waktu.
-2. **Gunakan Kabel Data USB yang Benar:** Gunakan kabel USB yang mendukung transfer data (biasanya kabel bawaan smartphone atau kabel pemrograman khusus).
-3. **Instal Driver USB-to-UART:** Periksa chip interface USB pada board ESP32 (biasanya tipe CP2102 atau CH340). Download dan instal driver resminya di laptop agar port COM terdeteksi di Device Manager.
-
----
-
-## 📶 6. Wi-Fi ESP32 Gagal Terhubung / Web Simulator Tidak Dapat Mengakses ESP32
-
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | ESP32 tidak mendapatkan alamat IP (LED berkedip terus) atau Web Simulator tidak bisa terhubung via nama mDNS (`flex-kelompok1.local`). |
-| **Penyebab Utama** | Nama SSID/Password Wi-Fi pada kode salah, jaringan Wi-Fi menggunakan frekuensi 5 GHz (ESP32 hanya mendukung 2.4 GHz), router mengaktifkan fitur *AP Isolation* (yang memblokir komunikasi antar perangkat lokal), atau browser/laptop tidak mendukung mDNS lokal. |
-
-### 🛠️ Solusi Teknis:
-1. **Pastikan Jaringan Wi-Fi Sama:** Laptop dan ESP32 harus terhubung ke Wi-Fi Access Point yang **sama persis**.
-2. **Gunakan Wi-Fi 2.4 GHz:** ESP32 tidak dapat mendeteksi atau terhubung ke sinyal Wi-Fi 5 GHz. Ubah pengaturan router atau gunakan Wi-Fi Hotspot dari smartphone (Tethering) yang diatur pada band 2.4 GHz.
-3. **Gunakan IP Address Langsung (Solusi mDNS Error):** Jika nama mDNS `.local` tidak bisa dibuka, buka Serial Monitor terlebih dahulu untuk melihat IP Address lokal yang didapatkan ESP32 (misal: `192.168.1.15`). Masukkan alamat IP tersebut langsung ke kolom koneksi Web Simulator untuk bypass mDNS.
-4. **Bypass AP Isolation:** Jaringan Wi-Fi sekolah/kampus sering kali mengaktifkan proteksi keamanan *AP Isolation* sehingga laptop tidak bisa membaca data dari ESP32. Solusi termudah adalah menggunakan **Hotspot Seluler dari HP** sebagai pemancar Wi-Fi untuk menghubungkan laptop dan ESP32.
+**Tabel 3. Troubleshooting Motor Servo**
+| Gejala | Kemungkinan Penyebab | Solusi |
+| :--- | :--- | :--- |
+| Motor servo tidak bergerak sama sekali. | Pin sinyal PWM salah dihubungkan, kabel sinyal putus, atau tegangan VCC tidak mencukupi. | Cek koneksi pin sinyal PWM (GPIO 18), pastikan kabel terhubung erat, dan pastikan servo mendapatkan suplai daya 5V yang cukup dari pin `VIN` ESP32 atau sumber daya eksternal. |
+| Motor servo bergetar terus-menerus (*jitter*) atau tidak stabil di posisi tertentu. | Arus catu daya dari USB laptop kurang untuk menggerakkan motor servo. | Hubungkan kapasitor elektrolit (Elco) sebesar 100 µF - 1000 µF secara paralel pada jalur VCC dan GND servo, atau gunakan catu daya 5V eksternal yang terpisah dari laptop. |
+| Servo bergerak tetapi sudut gerak tidak sesuai dengan sudut lekukan sensor flex. | Nilai pemetaan (*mapping*) sudut di dalam program tidak tepat. | Lakukan kalibrasi ulang nilai sudut batas bawah ($0^\circ$) dan batas atas ($180^\circ$) pada fungsi `map()` atau titik kalibrasi di program. |
+| Motor servo berbunyi mendengung secara terus-menerus (*buzzing*). | Servo dipaksa berputar melebihi batas sudut mekanis fisiknya. | Batasi nilai sudut maksimal pada program (jangan melebihi batas fisik servo, biasanya maksimal $180^\circ$). |
 
 ---
 
-## ⚡ 7. ESP32 Mengalami Bootloop / Reset Berulang Kali
+### 4. Sensor Flex & Rangkaian Pembagi Tegangan
+Sensor flex digunakan untuk mendeteksi tingkat kelengkungan jari/lengan dengan memanfaatkan perubahan nilai resistansi.
 
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | ESP32 terus menerus melakukan restart secara acak (terlihat di Serial Monitor: teks bootloader muncul berulang-ulang), atau mati mendadak saat servo mulai bergerak. |
-| **Penyebab Utama** | Daya arus listrik dari port USB laptop/komputer terlalu lemah (khususnya port USB 2.0 yang hanya menyuplai arus 500mA), kabel USB memiliki hambatan dalam yang besar, atau beban motor servo menarik arus melebihi kemampuan catu daya USB laptop. |
-
-### 🛠️ Solusi Teknis:
-1. **Gunakan Port USB 3.0:** Hubungkan kabel USB ESP32 ke port USB berwarna biru (USB 3.0) di laptop yang memiliki daya suplai arus lebih besar (hingga 900mA+).
-2. **Gunakan Adaptor Charger HP Eksternal:** Hubungkan board trainer ke charger HP 5V USB (minimal 1A - 2A) yang dicolokkan ke stopkontak dinding untuk menyuplai daya, bukan dari port USB laptop.
-3. **Ganti Kabel USB:** Gunakan kabel USB yang lebih tebal dan pendek untuk meminimalkan penurunan tegangan (*voltage drop*).
+**Tabel 4. Troubleshooting Sensor Flex**
+| Gejala | Kemungkinan Penyebab | Solusi |
+| :--- | :--- | :--- |
+| Pembacaan ADC sensor selalu bernilai 0 atau selalu bernilai 4095 (statis). | Terjadi kesalahan pemasangan kabel rangkaian pembagi tegangan (*voltage divider*) atau kabel input analog terputus. | Periksa kembali koneksi kabel rangkaian pembagi tegangan, pastikan kabel input analog terhubung ke pin ADC yang benar (GPIO 34 untuk Flex A, GPIO 35 untuk Flex B). |
+| Rentang (*range*) perubahan nilai ADC sangat sempit atau tidak sensitif saat sensor ditekuk. | Nilai resistor pembagi tegangan (*pull-down*) terlalu kecil (di bawah 1k Ohm) atau terlalu besar (di atas 100k Ohm). | Gunakan resistor pembagi tegangan dengan nilai yang pas (sangat direkomendasikan **resistor 10k Ohm**) agar range perubahan tegangan analog yang dibaca ADC menjadi optimal dan sensitif. |
+| Hasil pembacaan ADC melompat-lompat sangat tidak stabil (*noise* tinggi). | Adanya gangguan induksi elektromagnetik frekuensi tinggi atau fluktuasi tegangan referensi. | Pasang kapasitor filter non-polar 100 nF (0.1 µF) secara paralel di antara pin Analog Input (GPIO 34/35) dan GND, serta gunakan metode penyaringan software *moving average* pada program. |
 
 ---
 
-## 📥 8. Gagal Upload Program (Failed to Connect to ESP32)
+### 5. Komunikasi Web Simulator (Serial & Wi-Fi)
+Komunikasi ini digunakan untuk mengirimkan data sensor flex dari board ESP32 secara *real-time* ke Web Simulator.
 
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | Proses uploading di VS Code/PlatformIO berhenti di tulisan `Connecting...` lalu menampilkan error `A fatal error occurred: Failed to connect to ESP32: No serial data received.`. |
-| **Penyebab Utama** | Chip ESP32 tidak dapat masuk ke mode bootloader secara otomatis karena rangkaian kapasitor pada pin reset (EN) di board devkit mengalami kendala/keterlambatan sinyal sinkronisasi dari chip UART. |
-
-### 🛠️ Solusi Teknis:
-1. **Gunakan Tombol BOOT Manual:** Saat konsol di VS Code/PlatformIO menampilkan status `Connecting...` (diikuti tanda titik-titik `...___...`), tekan dan tahan tombol **BOOT** (atau **IO0**) pada board ESP32. Lepaskan tombol tersebut segera setelah proses penulisan flash (`Writing at...`) dimulai.
-2. **Gunakan Kapasitor pada Pin EN (Solusi Permanen):** Solder kapasitor elektrolit kecil berukuran **10 µF** di antara pin **EN** dan **GND** pada board ESP32 untuk menunda tegangan naik sesaat sehingga ESP32 dapat masuk ke mode download otomatis tanpa harus menekan tombol BOOT secara manual.
-
----
-
-## 📉 9. Nilai ADC Flex Sensor Selalu 0 (Flat) atau Selalu 4095 (Maksimal)
-
-| Detail Kendala | Penjelasan |
-| :--- | :--- |
-| **Gejala Fisik** | Nilai sensor Flex yang terbaca selalu statis di angka 0 (minimum) atau 4095 (maksimum), tidak merespon saat sensor ditekuk. |
-| **Penyebab Utama** | Kesalahan pada perakitan rangkaian pembagi tegangan (*voltage divider*). Sensor Flex adalah resistor variabel (resistansi berubah saat ditekuk) sehingga memerlukan resistor statis (misalnya resistor 10k Ohm) agar perubahannya dapat dibaca sebagai tegangan analog. Jika pin analog dibiarkan mengambang (*floating*), kabel terputus, atau resistor pembagi tegangan dipasang terbalik, nilai pembacaan akan menjadi tidak valid. |
-
-### 🛠️ Solusi Teknis:
-1. **Periksa Skema Pembagi Tegangan:** Pastikan rangkaian mengikuti skema berikut:
-   * Jalur **3.3V** terhubung ke salah satu kaki Sensor Flex.
-   * Kaki Sensor Flex yang satu lagi terhubung ke pin **Analog Input (GPIO 34/35)** DAN juga terhubung ke kaki **Resistor 10k Ohm**.
-   * Kaki **Resistor 10k Ohm** yang satunya lagi terhubung langsung ke **GND**.
-2. **Periksa Koneksi Kabel Jumper:** Pastikan kabel jumper yang menusuk ke pin ESP32 tidak longgar dan terhubung ke pin ADC yang tepat (GPIO 34 untuk Flex A, GPIO 35 untuk Flex B).
+**Tabel 5. Troubleshooting Komunikasi Web Simulator**
+| Gejala | Kemungkinan Penyebab | Solusi |
+| :--- | :--- | :--- |
+| Web Simulator menampilkan pesan "Connection failed" saat mencoba terhubung via USB Serial. | Port COM sedang dikunci/dipakai oleh aplikasi lain (seperti Serial Monitor di Arduino IDE atau VS Code/PlatformIO). | Pastikan untuk menutup (*close/disconnect*) semua tab Serial Monitor pada editor pemrograman sebelum menekan tombol Connect di Web Simulator. |
+| Web Simulator tidak dapat mendeteksi port USB ESP32 sama sekali. | Menggunakan kabel USB charger biasa yang tidak memiliki kabel data di dalamnya, atau driver USB UART belum terinstal. | Pastikan menggunakan kabel data USB asli yang mendukung transfer data, dan instal driver chip UART (CP2102/CH340) di komputer. |
+| ESP32 tidak mendapatkan IP Address (indikator Wi-Fi gagal terhubung). | Nama SSID atau password Wi-Fi pada kode program salah, atau menggunakan Wi-Fi frekuensi 5 GHz. | Periksa kembali ketepatan penulisan SSID dan password Wi-Fi pada kode program, serta pastikan jaringan Wi-Fi menggunakan frekuensi 2.4 GHz. |
+| Web Simulator gagal terhubung ke ESP32 meskipun terhubung ke Wi-Fi yang sama (mDNS `.local` error). | Jaringan Wi-Fi sekolah/kampus mengaktifkan fitur *AP Isolation* (memblokir komunikasi antar perangkat lokal), atau browser tidak mendukung resolusi mDNS. | Gunakan fitur Hotspot Seluler (Tethering) dari smartphone 2.4 GHz untuk menghubungkan laptop dan ESP32, atau bypass mDNS dengan memasukkan IP Address lokal ESP32 secara langsung di Web Simulator. |
