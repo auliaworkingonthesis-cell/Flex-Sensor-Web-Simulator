@@ -15,6 +15,10 @@
 #define FLEX_B_PIN  35  // Pin ADC untuk Sensor Flex B
 #define SERVO_PIN   18  // Pin PWM untuk Servo Motor
 
+// Konfigurasi Input Kontrol Servo
+// Set ke true jika Servo dikendalikan Flex A, set ke false untuk Flex B
+#define USE_FLEX_A_FOR_SERVO  true
+
 // Kalibrasi ADC default (Langsung edit di variabel ini)
 int flexA_min = 3054;
 int flexA_max = 2766;
@@ -56,7 +60,9 @@ void loop() {
         int rawB = analogRead(FLEX_B_PIN);
         
         // Gerakkan Servo Fisik
-        int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
+        int angle = USE_FLEX_A_FOR_SERVO ? 
+                    mapClamped(rawA, flexA_min, flexA_max, 0, 180) :
+                    mapClamped(rawB, flexB_min, flexB_max, 0, 180);
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
             lastAngle = angle;

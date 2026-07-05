@@ -55,7 +55,9 @@ void handleData() {
     
     int panPct  = mapClamped(rawA, flexA_min, flexA_max, 100, -100);
     int gripPct = mapClamped(rawB, flexB_min, flexB_max, 100, 0);
-    int angle   = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
+    int angle   = USE_FLEX_A_FOR_SERVO ? 
+                  mapClamped(rawA, flexA_min, flexA_max, 0, 180) :
+                  mapClamped(rawB, flexB_min, flexB_max, 0, 180);
     
     char json[256];
     snprintf(json, sizeof(json),
@@ -126,7 +128,10 @@ void loop() {
         lastServoUpdate = now;
         
         int rawA = analogRead(FLEX_A_PIN);
-        int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
+        int rawB = analogRead(FLEX_B_PIN);
+        int angle = USE_FLEX_A_FOR_SERVO ? 
+                    mapClamped(rawA, flexA_min, flexA_max, 0, 180) :
+                    mapClamped(rawB, flexB_min, flexB_max, 0, 180);
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
             lastAngle = angle;

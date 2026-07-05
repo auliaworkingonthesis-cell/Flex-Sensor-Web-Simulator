@@ -10,11 +10,18 @@
 #include <ESP32Servo.h>
 
 #define FLEX_A_PIN  34  // Pin ADC untuk Sensor Flex A
+#define FLEX_B_PIN  35  // Pin ADC untuk Sensor Flex B
 #define SERVO_PIN   18  // Pin PWM untuk Servo Motor
+
+// Konfigurasi Input Kontrol Servo
+// Set ke true jika Servo dikendalikan Flex A, set ke false untuk Flex B
+#define USE_FLEX_A_FOR_SERVO  true
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
 #define FLEX_A_MIN  3054  // ADC lurus (0 derajat)
 #define FLEX_A_MAX  2766  // ADC bengkok maksimal (180 derajat)
+#define FLEX_B_MIN  3000
+#define FLEX_B_MAX  2700
 
 Servo myServo;
 int lastAngle = -1;
@@ -25,6 +32,7 @@ void setup() {
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
+    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Hubungkan servo
     myServo.attach(SERVO_PIN);
@@ -36,15 +44,17 @@ void loop() {
     if (currentMillis - lastUpdate >= interval) {
         lastUpdate = currentMillis;
         
-        int rawADC = analogRead(FLEX_A_PIN);
+        int rawADC = USE_FLEX_A_FOR_SERVO ? analogRead(FLEX_A_PIN) : analogRead(FLEX_B_PIN);
+        int flexMin = USE_FLEX_A_FOR_SERVO ? FLEX_A_MIN : FLEX_B_MIN;
+        int flexMax = USE_FLEX_A_FOR_SERVO ? FLEX_A_MAX : FLEX_B_MAX;
         
         // Urutkan batas constrain
-        int lowLimit = min(FLEX_A_MIN, FLEX_A_MAX);
-        int highLimit = max(FLEX_A_MIN, FLEX_A_MAX);
+        int lowLimit = min(flexMin, flexMax);
+        int highLimit = max(flexMin, flexMax);
         int constrainedADC = constrain(rawADC, lowLimit, highLimit);
         
         // Mapping ke sudut servo 0 s.d 180 derajat
-        int angle = map(constrainedADC, FLEX_A_MIN, FLEX_A_MAX, 0, 180);
+        int angle = map(constrainedADC, flexMin, flexMax, 0, 180);
         
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
