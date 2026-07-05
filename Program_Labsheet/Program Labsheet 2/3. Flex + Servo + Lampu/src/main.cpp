@@ -4,49 +4,28 @@
  *  Program Labsheet 2: Flex + Servo + Lampu
  * ============================================================
  *  Deskripsi: Integrasi pergerakan Servo Motor dan indikator 
- *             3 buah lampu LED berdasarkan lekukan Sensor Flex A
+ *             3 buah lampu LED berdasarkan lekukan Sensor Flex
  *             secara non-blocking.
  */
 
 #include <ESP32Servo.h>
 
-#ifndef FLEX_B_PIN
-#define FLEX_B_PIN 35
-#endif
-
-#ifndef USE_FLEX_A_FOR_SERVO
-#define USE_FLEX_A_FOR_SERVO true
-#endif
-
-// Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
-int readAverage(int pin) {
-    long sum = 0;
-    for (int i = 0; i < 20; i++) {
-        sum += analogRead(pin);
-        delayMicroseconds(50);
-    }
-    return sum / 20;
-}
-
-
 #define FLEX_A_PIN      34  // Pin ADC untuk Sensor Flex A
 #define FLEX_B_PIN      35  // Pin ADC untuk Sensor Flex B
 #define SERVO_PIN        18  // Pin PWM untuk Servo Motor
-
-// Konfigurasi Input Kontrol Servo
-// Set ke true jika Servo dikendalikan Flex A, set ke false untuk Flex B
-#define USE_FLEX_A_FOR_SERVO  true
 #define LED_RED_PIN      25  // LED Merah
 #define LED_YELLOW_PIN   26  // LED Kuning
 #define LED_GREEN_PIN    27  // LED Hijau
 
+// Konfigurasi Input Kontrol Servo
+// Set ke true jika Servo dikendalikan Flex A, set ke false untuk Flex B
+#define USE_FLEX_A_FOR_SERVO  true
+
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
 #define FLEX_A_MIN  3054
 #define FLEX_A_MAX  2766
-#define FLEX_B_MIN  3000
-#define FLEX_B_MAX  2700
-#define FLEX_B_MIN  3000
-#define FLEX_B_MAX  2700
+#define FLEX_B_MIN  3054
+#define FLEX_B_MAX  2766
 
 // Threshold LED
 #define THRESHOLD_GREEN   2910
@@ -56,6 +35,16 @@ Servo myServo;
 int lastAngle = -1;
 unsigned long lastUpdate = 0;
 const unsigned long interval = 20; // Check interval 20ms
+
+// Fungsi untuk membaca rata-rata analog (Oversampling 20 sampel untuk stabilitas)
+int readAverage(int pin) {
+    long sum = 0;
+    for (int i = 0; i < 20; i++) {
+        sum += analogRead(pin);
+        delayMicroseconds(50);
+    }
+    return sum / 20;
+}
 
 void setLed(bool r, bool y, bool g) {
     digitalWrite(LED_RED_PIN,    r ? HIGH : LOW);
@@ -68,7 +57,6 @@ void setup() {
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
-    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Konfigurasi pin LED sebagai OUTPUT
@@ -97,7 +85,9 @@ void loop() {
         int constrainedADC = constrain(rawADC, lowLimit, highLimit);
         int angle = map(constrainedADC, flexMin, flexMax, 0, 180);
         
+        // Output Serial Debug
         Serial.printf("Flex: %d | Servo: %d deg | LED: %s\n", rawADC, angle, (rawADC >= THRESHOLD_GREEN) ? "HIJAU" : ((rawADC >= THRESHOLD_YELLOW) ? "KUNING" : "MERAH"));
+        
         if (angle != lastAngle) {
             myServo.write(180 - angle); // Inversi hardware servo fisik
             lastAngle = angle;

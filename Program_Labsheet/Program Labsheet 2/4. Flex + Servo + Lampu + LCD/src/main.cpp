@@ -23,7 +23,7 @@
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
 #define FLEX_A_MIN  1880
-#define FLEX_A_MAX  1720
+#define FLEX_A_MAX  1750
 #define FLEX_B_MIN  2930
 #define FLEX_B_MAX  2630
 
