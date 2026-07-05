@@ -142,6 +142,9 @@ void loop() {
             
             lcd.setCursor(0, 3);
             lcd.print("Trainer : READY ");
+            
+            // Output Serial Debug
+            Serial.printf("Flex A: %d | Flex B: %d | Volt A: %.2fV | Volt B: %.2fV | Servo: %d deg\n", rawADC, rawADC_B, voltA, voltB, angle);
         }
     }
 }
