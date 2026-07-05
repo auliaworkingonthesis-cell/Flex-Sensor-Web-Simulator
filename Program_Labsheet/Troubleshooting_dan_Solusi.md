@@ -29,10 +29,21 @@ LCD I2C 16x4 berfungsi sebagai antarmuka output untuk menampilkan status sistem,
 
 ---
 
-### 3. Motor Servo
+### 3. LED Traffic Light
+Modul LED Traffic Light (Merah, Kuning, Hijau) digunakan sebagai indikator visual level tekukan sensor flex (aktif pada Labsheet 2).
+
+**Tabel 3. Troubleshooting LED Traffic Light**
+| Gejala | Kemungkinan Penyebab | Solusi |
+| :--- | :--- | :--- |
+| Lampu LED Traffic Light menyala sangat redup (kurang terang). | Level tegangan logika output (High) dari GPIO ESP32 hanya **3.3V**, sedangkan modul LED Traffic Light dirancang untuk bekerja optimal pada tegangan **5V**. | Hubungkan pin VCC modul LED ke pin `VIN` / `5V` ESP32 (yang mendapatkan daya USB 5V stabil) atau gunakan rangkaian driver transistor/level converter untuk menyuplai tegangan 5V penuh ke LED. |
+| Lampu LED Traffic Light mati total meskipun nilai flex pada monitor berubah. | Kabel jumper terbalik antara pin data dan Ground, atau pin GPIO yang digunakan salah didefinisikan dalam kode program. | Periksa kembali kesesuaian pin data (GPIO 25, 26, 27), pastikan pin GND modul LED terhubung kuat ke GND ESP32, dan cek ketepatan nomor pin di kode program. |
+
+---
+
+### 4. Motor Servo
 Motor servo digunakan untuk mensimulasikan gerakan mekanik (sudut) berdasarkan kelengkungan sensor flex.
 
-**Tabel 3. Troubleshooting Motor Servo**
+**Tabel 4. Troubleshooting Motor Servo**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
 | Motor servo tidak bergerak sama sekali. | Pin sinyal PWM salah dihubungkan, kabel sinyal putus, atau tegangan VCC tidak mencukupi. | Cek koneksi pin sinyal PWM (GPIO 18), pastikan kabel terhubung erat, dan pastikan servo mendapatkan suplai daya 5V yang cukup dari pin `VIN` ESP32 atau sumber daya eksternal. |
@@ -42,10 +53,10 @@ Motor servo digunakan untuk mensimulasikan gerakan mekanik (sudut) berdasarkan k
 
 ---
 
-### 4. Sensor Flex & Rangkaian Pembagi Tegangan
+### 5. Sensor Flex & Rangkaian Pembagi Tegangan
 Sensor flex digunakan untuk mendeteksi tingkat kelengkungan jari/lengan dengan memanfaatkan perubahan nilai resistansi.
 
-**Tabel 4. Troubleshooting Sensor Flex**
+**Tabel 5. Troubleshooting Sensor Flex**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
 | Pembacaan ADC sensor selalu bernilai 0 atau selalu bernilai 4095 (statis). | Terjadi kesalahan pemasangan kabel rangkaian pembagi tegangan (*voltage divider*) atau kabel input analog terputus. | Periksa kembali koneksi kabel rangkaian pembagi tegangan, pastikan kabel input analog terhubung ke pin ADC yang benar (GPIO 34 untuk Flex A, GPIO 35 untuk Flex B). |
@@ -54,10 +65,10 @@ Sensor flex digunakan untuk mendeteksi tingkat kelengkungan jari/lengan dengan m
 
 ---
 
-### 5. Komunikasi Web Simulator (Serial & Wi-Fi)
+### 6. Komunikasi Web Simulator (Serial & Wi-Fi)
 Komunikasi ini digunakan untuk mengirimkan data sensor flex dari board ESP32 secara *real-time* ke Web Simulator.
 
-**Tabel 5. Troubleshooting Komunikasi Web Simulator**
+**Tabel 6. Troubleshooting Komunikasi Web Simulator**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
 | Web Simulator menampilkan pesan "Connection failed" saat mencoba terhubung via USB Serial. | Port COM sedang dikunci/dipakai oleh aplikasi lain (seperti Serial Monitor di Arduino IDE atau VS Code/PlatformIO). | Pastikan untuk menutup (*close/disconnect*) semua tab Serial Monitor pada editor pemrograman sebelum menekan tombol Connect di Web Simulator. |
@@ -67,10 +78,10 @@ Komunikasi ini digunakan untuk mengirimkan data sensor flex dari board ESP32 sec
 
 ---
 
-### 6. Fitur Feedback Suara (TTS & Upload Audio)
+### 7. Fitur Feedback Suara (TTS & Upload Audio)
 Fitur ini mensimulasikan suara asisten virtual (dalam bahasa Indonesia) atau nada kustom saat lekukan sensor flex berada dalam rentang tertentu.
 
-**Tabel 6. Troubleshooting Fitur Suara**
+**Tabel 7. Troubleshooting Fitur Suara**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
 | Suara tidak terdengar sama sekali saat nilai flex masuk ke rentang yang diatur. | Fitur suara belum diaktifkan di web, volume perangkat mati, atau browser memblokir fitur *Speech Synthesis* (kebijakan keamanan *Autoplay* browser). | Klik tombol **Enable Voice** pada halaman Web Simulator, periksa volume perangkat, dan lakukan klik sembarang pada halaman web terlebih dahulu untuk memberikan izin akses audio/suara (*user interaction*). |
@@ -79,10 +90,10 @@ Fitur ini mensimulasikan suara asisten virtual (dalam bahasa Indonesia) atau nad
 
 ---
 
-### 7. Tampilan Animasi 3D Lengan Gripper / SCARA
+### 8. Tampilan Animasi 3D Lengan Gripper / SCARA
 Layar 3D WebGL simulator menampilkan representasi gerakan mekanis 3D lengan gripper/SCARA secara *real-time*.
 
-**Tabel 7. Troubleshooting Animasi 3D**
+**Tabel 8. Troubleshooting Animasi 3D**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
 | Kanvas area model 3D lengan gripper berwarna hitam kosong (blank) atau tidak muncul sama sekali. | Browser tidak mendukung WebGL, atau fitur *Hardware Acceleration* dinonaktifkan pada setelan browser. | Aktifkan fitur *Hardware Acceleration* di setelan browser (Settings -> System -> Use graphics acceleration when available) lalu restart browser Anda. |
