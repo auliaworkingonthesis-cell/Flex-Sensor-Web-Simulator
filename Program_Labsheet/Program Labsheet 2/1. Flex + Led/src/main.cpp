@@ -1,4 +1,23 @@
 #include <Arduino.h>
+
+#ifndef FLEX_B_PIN
+#define FLEX_B_PIN 35
+#endif
+
+#ifndef USE_FLEX_A_FOR_SERVO
+#define USE_FLEX_A_FOR_SERVO true
+#endif
+
+// Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
+int readAverage(int pin) {
+    long sum = 0;
+    for (int i = 0; i < 10; i++) {
+        sum += analogRead(pin);
+        delayMicroseconds(50);
+    }
+    return sum / 10;
+}
+
 /**
  * ============================================================
  *  Program Labsheet 2: Flex + Led
@@ -32,6 +51,7 @@ void setup() {
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
+    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Konfigurasi pin LED sebagai OUTPUT
     pinMode(LED_RED_PIN,    OUTPUT);
@@ -45,7 +65,7 @@ void loop() {
     if (currentMillis - lastUpdate >= interval) {
         lastUpdate = currentMillis;
         
-        int rawADC = analogRead(FLEX_A_PIN);
+        int rawADC = readAverage(FLEX_A_PIN);
         
         // Logika pemilihan LED yang menyala
         if (rawADC >= THRESHOLD_GREEN) {

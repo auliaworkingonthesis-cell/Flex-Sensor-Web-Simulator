@@ -14,6 +14,25 @@
 #include <ESPmDNS.h>
 #include <ESP32Servo.h>
 
+#ifndef FLEX_B_PIN
+#define FLEX_B_PIN 35
+#endif
+
+#ifndef USE_FLEX_A_FOR_SERVO
+#define USE_FLEX_A_FOR_SERVO true
+#endif
+
+// Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
+int readAverage(int pin) {
+    long sum = 0;
+    for (int i = 0; i < 10; i++) {
+        sum += analogRead(pin);
+        delayMicroseconds(50);
+    }
+    return sum / 10;
+}
+
+
 #define FLEX_A_PIN       34  // Pin ADC untuk Sensor Flex A
 #define FLEX_B_PIN       35  // Pin ADC untuk Sensor Flex B
 #define SERVO_PIN        18  // Pin PWM untuk Servo Motor
@@ -50,8 +69,8 @@ void sendCorsHeaders() {
 void handleData() {
     sendCorsHeaders();
     
-    int rawA = analogRead(FLEX_A_PIN);
-    int rawB = analogRead(FLEX_B_PIN);
+    int rawA = readAverage(FLEX_A_PIN);
+    int rawB = readAverage(FLEX_B_PIN);
     
     int panPct  = mapClamped(rawA, flexA_min, flexA_max, 100, -100);
     int gripPct = mapClamped(rawB, flexB_min, flexB_max, 100, 0);
@@ -90,6 +109,7 @@ void setup() {
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
+    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
 
     // Konfigurasi Servo
     myServo.attach(SERVO_PIN);
@@ -127,8 +147,8 @@ void loop() {
     if (now - lastServoUpdate >= 20) {
         lastServoUpdate = now;
         
-        int rawA = analogRead(FLEX_A_PIN);
-        int rawB = analogRead(FLEX_B_PIN);
+        int rawA = readAverage(FLEX_A_PIN);
+        int rawB = readAverage(FLEX_B_PIN);
         int angle = USE_FLEX_A_FOR_SERVO ? 
                     mapClamped(rawA, flexA_min, flexA_max, 0, 180) :
                     mapClamped(rawB, flexB_min, flexB_max, 0, 180);
