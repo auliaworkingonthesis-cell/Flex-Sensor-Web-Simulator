@@ -10,9 +10,10 @@ ESP32 merupakan komponen utama pengendali seluruh sistem pada kit trainer ini. A
 **Tabel 1. Troubleshooting ESP32 DevKit V1**
 | Gejala | Kemungkinan Penyebab | Solusi |
 | :--- | :--- | :--- |
-| Lampu power LED pada board ESP32 tidak menyala. | Kabel USB rusak, port USB komputer bermasalah, atau terjadi hubungan singkat (*short circuit*) pada board. | Ganti kabel USB, coba hubungkan ke port USB lain pada komputer, dan pastikan tidak ada kabel jumper yang salah pasang (saling bersentuhan). |
-| Program gagal diupload (*Failed to connect to ESP32*). | Driver USB-to-UART (CP210x atau CH340) belum terinstal, port COM salah dipilih, atau board telat masuk ke mode bootloader. | Install driver chip UART yang sesuai di komputer, pastikan memilih port COM yang tepat di VS Code/PlatformIO, dan tekan serta tahan tombol **BOOT** pada ESP32 saat proses upload menampilkan status `Connecting...`. |
-| Program berhasil terupload tetapi program tidak berjalan atau ESP32 mengalami *bootloop* (restart terus-menerus). | Arus dari port USB laptop/komputer kurang (khususnya port USB 2.0 yang hanya menyuplai 500mA), atau terdapat *short circuit* pada pin output. | Pindahkan koneksi ke port USB 3.0 (berwarna biru), gunakan adaptor charger HP eksternal (5V, 1A-2A), atau periksa kembali rangkaian kabel untuk memastikan tidak ada hubungan singkat. |
+| Lampu power LED pada board ESP32 tidak menyala. | Port USB komputer bermasalah, kabel USB rusak, atau tidak menyuplai daya ke board. | Coba ganti ke port USB lain pada komputer, atau ganti kabel USB dengan yang baru. |
+| Board ESP32 tidak terbaca oleh komputer (tidak terdeteksi). | Koneksi kabel USB longgar, kabel USB hanya tipe charger, atau port serial belum terdaftar di sistem operasi. | Pasang ulang kabel USB secara erat dan lakukan pengecekan pada menu **Device Manager** untuk memastikan port serial terdeteksi oleh komputer. |
+| Program tidak bisa di-upload ke board ESP32. | Driver USB-to-UART (CP2102/CH340) belum terinstal, port COM salah dipilih, atau terjadi error code tertentu saat upload. | Periksa *error code* yang muncul di konsol uploader untuk mencari akar masalah, pastikan driver UART terinstal, dan pastikan port COM yang aktif dipilih dengan benar di editor. |
+| ESP32 mengalami restart sendiri secara terus-menerus (*Brownout*). | Tegangan input drop di bawah ambang batas minimal saat komponen lain (seperti motor servo) menarik arus listrik yang besar. | Cek tegangan input dan output ESP32 menggunakan multimeter, gunakan catu daya eksternal yang stabil untuk servo, atau gunakan program/konfigurasi *Brownout Detector* pada firmware untuk mengantisipasi kegagalan sistem. |
 
 ---
 
