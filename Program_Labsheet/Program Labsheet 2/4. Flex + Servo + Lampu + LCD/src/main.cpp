@@ -22,8 +22,8 @@
 #define USE_FLEX_A_FOR_SERVO  true
 
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
-#define FLEX_A_MIN  2930
-#define FLEX_A_MAX  2630
+#define FLEX_A_MIN  2920
+#define FLEX_A_MAX  2680
 #define FLEX_B_MIN  2930
 #define FLEX_B_MAX  2630
 
@@ -112,37 +112,35 @@ void loop() {
             setLed(true, false, false);   // Merah
         }
         
-        // ── 2. Tampilkan Data di LCD 16x4 (Setiap 200ms) ──────────────────────
+                // ── 2. Tampilkan Data di LCD 16x4 (Setiap 200ms) ──────────────────────
         if (now - lastLcdUpdate >= 200) {
             lastLcdUpdate = now;
             
-            // Estimasi tegangan (ESP32 ADC Vref ~ 3.3V, atau 3.465V linear attenuation)
+            // Estimasi tegangan
             float voltA = (rawADC * 3.465) / 4095.0;
             float voltB = (rawADC_B * 3.465) / 4095.0;
             
-            // Baris 0: Flex A ADC
+            // Hitung sudut sensor B untuk S2
+            int lowB = min(FLEX_B_MIN, FLEX_B_MAX);
+            int highB = max(FLEX_B_MIN, FLEX_B_MAX);
+            int angleB = map(constrain(rawADC_B, lowB, highB), FLEX_B_MIN, FLEX_B_MAX, 0, 180);
+            
+            char line0[17], line1[17], line2[17];
+            snprintf(line0, sizeof(line0), "FA:%4d | %.2fV", rawADC, voltA);
+            snprintf(line1, sizeof(line1), "FB:%4d | %.2fV", rawADC_B, voltB);
+            snprintf(line2, sizeof(line2), "S1:%3d\xDF   S2:%3d\xDF", angle, angleB);
+            
             lcd.setCursor(0, 0);
-            lcd.print("Flex A  : ");
-            lcd.print(rawADC);
-            lcd.print("    ");
+            lcd.print(line0);
             
-            // Baris 1: Flex B ADC
             lcd.setCursor(0, 1);
-            lcd.print("Flex B  : ");
-            lcd.print(rawADC_B);
-            lcd.print("    ");
+            lcd.print(line1);
             
-            // Baris 2: Tegangan Flex A
             lcd.setCursor(0, 2);
-            lcd.print("Volt A  : ");
-            lcd.print(voltA, 2);
-            lcd.print(" V  ");
+            lcd.print(line2);
             
-            // Baris 3: Tegangan Flex B
             lcd.setCursor(0, 3);
-            lcd.print("Volt B  : ");
-            lcd.print(voltB, 2);
-            lcd.print(" V  ");
+            lcd.print("Trainer : READY ");
         }
     }
 }
