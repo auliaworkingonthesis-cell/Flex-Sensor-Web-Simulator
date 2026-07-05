@@ -68,7 +68,7 @@ void loop() {
         
         char json[128];
         snprintf(json, sizeof(json),
-            "DATA:{"flexA":%d,"flexB":%d,"pan":%d,"servo":%.1f,"grip":%d,"phrase":""}",
+            "DATA:\"{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d,\"phrase\":\"\"}\"",
             rawA, rawB, panPct, (float)angle, gripPct);
         Serial.println(json);
     }
@@ -86,8 +86,7 @@ void loop() {
 
     // ── 2. Terima Perintah Kalibrasi Baru dari Web ───────────────────────────
     while (Serial.available()) {
-        String line = Serial.readStringUntil('
-');
+        String line = Serial.readStringUntil('\n');
         line.trim();
         if (line.startsWith("SET:")) {
             String json = line.substring(4);

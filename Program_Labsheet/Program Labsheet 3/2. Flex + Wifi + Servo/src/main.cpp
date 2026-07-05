@@ -59,7 +59,7 @@ void handleData() {
     
     char json[256];
     snprintf(json, sizeof(json),
-        "{"flexA":%d,"flexB":%d,"pan":%d,"servo":%.1f,"grip":%d}",
+        "{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d}",
         rawA, rawB, panPct, (float)angle, gripPct);
         
     server.send(200, "application/json", json);
