@@ -41,7 +41,7 @@ void setup() {
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     Serial.println("Program Labsheet 1 - Serial Monitor Ready (Non-blocking)");
-}
+}l
 
 void loop() {
     unsigned long currentMillis = millis();
