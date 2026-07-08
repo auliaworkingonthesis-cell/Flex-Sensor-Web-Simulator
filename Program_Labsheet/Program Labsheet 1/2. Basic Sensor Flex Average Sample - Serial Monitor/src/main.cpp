@@ -40,19 +40,25 @@ void setup() {
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
     analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
-    Serial.println("Program Labsheet 1 - Serial Monitor Ready (Non-blocking)");
-}l
+    Serial.println("Program Labsheet 1 - Serial Monitor Ready (Average)");
+}
 
 void loop() {
     unsigned long currentMillis = millis();
     if (currentMillis - lastUpdate >= interval) {
         lastUpdate = currentMillis;
         
-        // Baca nilai analog mentah
+        // Baca nilai analog mentah dengan filter rata-rata
         int rawADC = readAverage(FLEX_A_PIN);
         
+        // Hitung estimasi tegangan analog (3.465V adalah batas kalibrasi referensi)
+        float voltA = (rawADC * 3.465) / 4095.0;
+        
         // Cetak ke Serial Monitor
-        Serial.print("Flex A ADC Value: ");
-        Serial.println(rawADC);
+        Serial.print("Flex A ADC Value (Average): ");
+        Serial.print(rawADC);
+        Serial.print(" | Voltage: ");
+        Serial.print(voltA, 2);
+        Serial.println(" V");
     }
 }
