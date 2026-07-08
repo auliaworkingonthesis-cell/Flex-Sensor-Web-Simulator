@@ -62,9 +62,14 @@ void loop() {
                 int rawADC = readAverage(FLEX_A_PIN);
         int rawADC_B = readAverage(FLEX_B_PIN);
         
-        // Estimasi tegangan
-        float voltA = (rawADC * 3.465) / 4095.0;
-        float voltB = (rawADC_B * 3.465) / 4095.0;
+        // Rangkaian Pembagi Tegangan (Voltage Divider):
+        // Supply Vin = 5.0V
+        // R1 = Sensor Flex
+        // R2 = Resistor Tetap 22k Ohm (ke GND)
+        // Vout = Vin * (R2 / (R1 + R2)) -> Dihubungkan ke pin ADC ESP32
+        // Tegangan yang dibaca pada pin ADC ESP32 (range 0 - 3.3V):
+        float voltA = (rawADC * 3.3) / 4095.0;
+        float voltB = (rawADC_B * 3.3) / 4095.0;
         
         // Estimasi sudut untuk S1 & S2
         int lowA = min(FLEX_A_MIN, FLEX_A_MAX);

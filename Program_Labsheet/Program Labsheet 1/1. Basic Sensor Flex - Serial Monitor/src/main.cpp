@@ -33,8 +33,13 @@ void loop() {
         // Baca nilai analog mentah langsung tanpa filter/average
         int rawADC = analogRead(FLEX_A_PIN);
         
-        // Hitung estimasi tegangan analog (3.465V adalah batas kalibrasi referensi)
-        float voltA = (rawADC * 3.465) / 4095.0;
+        // Rangkaian Pembagi Tegangan (Voltage Divider):
+        // Supply Vin = 5.0V
+        // R1 = Sensor Flex (kebengkokan naik -> resistansi naik)
+        // R2 = Resistor Tetap 22k Ohm (ke GND)
+        // Vout = Vin * (R2 / (R1 + R2)) -> Dihubungkan ke pin ADC ESP32
+        // Tegangan yang dibaca pada pin ADC ESP32 (range 0 - 3.3V):
+        float voltA = (rawADC * 3.3) / 4095.0;
         
         // Cetak ke Serial Monitor
         Serial.print("Flex A ADC Value (Direct): ");
