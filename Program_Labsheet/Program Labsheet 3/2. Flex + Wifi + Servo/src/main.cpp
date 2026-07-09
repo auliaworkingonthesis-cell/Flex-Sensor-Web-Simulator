@@ -35,15 +35,17 @@
 #define WIFI_PASSWORD    "PASSWORD_WIFI"
 #define MDNS_NAME        "flex-kelompok1"   // Akses via http://flex-kelompok1.local
 
-// ── KALIBRASI ADC (Sesuaikan dengan hasil pengukuran sensor) ─────────────────
+// ── KALIBRASI ADC ────────────────────────────────────────────────────────────
+// Nilai default ini akan otomatis diperbarui dari Web Simulator saat connect.
+// Tidak perlu ubah & upload ulang — cukup atur di web lalu klik Connect WiFi.
 #ifdef USE_FLEX_A
-    int flexA_min = 3054;       // ADC saat Flex A lurus
-    int flexA_max = 2766;       // ADC saat Flex A bengkok maksimal
+    int flexA_min = 3040;       // ADC saat Flex A lurus   (default web: 3040)
+    int flexA_max = 2800;       // ADC saat Flex A bengkok (default web: 2800)
 #endif
 
 #ifdef USE_FLEX_B
-    int flexB_min = 3054;       // ADC saat Flex B lurus
-    int flexB_max = 2766;       // ADC saat Flex B bengkok maksimal
+    int flexB_min = 3040;       // ADC saat Flex B lurus   (default web: 3040)
+    int flexB_max = 2800;       // ADC saat Flex B bengkok (default web: 2800)
 #endif
 // ─────────────────────────────────────────────────────────────────────────────
 

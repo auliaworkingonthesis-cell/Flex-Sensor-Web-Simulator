@@ -30,15 +30,17 @@
 #define FLEX_B_PIN  35          // Pin ADC Sensor Flex B
 #define SERVO_PIN   18          // Pin PWM Servo Motor
 
-// ── KALIBRASI ADC (Sesuaikan dengan hasil pengukuran sensor) ─────────────────
+// ── KALIBRASI ADC ────────────────────────────────────────────────────────────
+// Nilai default ini akan otomatis diperbarui dari Web Simulator saat connect.
+// Tidak perlu ubah & upload ulang — cukup atur di web lalu klik Connect.
 #ifdef USE_FLEX_A
-    int flexA_min = 3050;       // ADC saat Flex A lurus
-    int flexA_max = 2790;       // ADC saat Flex A bengkok maksimal
+    int flexA_min = 3040;       // ADC saat Flex A lurus   (default web: 3040)
+    int flexA_max = 2800;       // ADC saat Flex A bengkok (default web: 2800)
 #endif
 
 #ifdef USE_FLEX_B
-    int flexB_min = 2270;       // ADC saat Flex B lurus
-    int flexB_max = 2800;       // ADC saat Flex B bengkok maksimal
+    int flexB_min = 3040;       // ADC saat Flex B lurus   (default web: 3040)
+    int flexB_max = 2800;       // ADC saat Flex B bengkok (default web: 2800)
 #endif
 // ─────────────────────────────────────────────────────────────────────────────
 

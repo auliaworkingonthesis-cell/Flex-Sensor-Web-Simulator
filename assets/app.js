@@ -628,6 +628,8 @@ function initSimulator() {
     window.clearTimeout(pollTimer);
     setConnectionStatus(`Connecting: ${selectedMdns}`, 'yellow');
     pollEsp32();
+    // Kirim kalibrasi saat pertama kali WiFi tersambung
+    window.setTimeout(() => syncSettingsToHardware(settings), 1200);
   });
 
   refs.connectSerial.addEventListener('click', async () => {
