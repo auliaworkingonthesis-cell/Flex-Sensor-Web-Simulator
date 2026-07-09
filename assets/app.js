@@ -976,19 +976,23 @@ function initSimulator() {
     refs.headerFlex.textContent = `Flex A ${current.flexA} - Flex B ${current.flexB}`;
     refs.servoFlex.textContent = current[settings.servo.source] ?? current.flexA;
 
+    current.servo = target.servo;
+
     if (modules.servo) {
-      current.servo = target.servo;
       refs.needle.style.transform = `rotate(${-90 + current.servo}deg)`;
       refs.servo.textContent = Math.round(current.servo);
       if (refs.servoOutDisplay) refs.servoOutDisplay.textContent = Math.round(current.servo);
+    }
 
-      // Kirim sudut servo ke ESP32 via Serial agar servo real sync dengan web
+    // Kirim sudut servo ke ESP32 via Serial jika modul servo ATAU scara/gripper aktif
+    if (modules.servo || modules.gripper) {
       const servoAngle = Math.round(current.servo);
       if (servoAngle !== lastSentServoAngle && serialActive && serialWriter) {
         lastSentServoAngle = servoAngle;
         serialWriter.write(encoder.encode(`SERVO:${servoAngle}\n`)).catch(() => {});
       }
     }
+
 
     if (modules.gripper) {
       current.pan = target.pan;
