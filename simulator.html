@@ -225,9 +225,11 @@
           </label>
         </div>
         <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
-        <div class="settings-grid audio-settings">
-          <label><span>Graph Min</span><input id="graphMin" type="number" /></label>
-          <label><span>Graph Max</span><input id="graphMax" type="number" /></label>
+        <div class="settings-grid audio-settings" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
+          <label><span>Flex A Min</span><input id="graphMinA" type="number" /></label>
+          <label><span>Flex A Max</span><input id="graphMaxA" type="number" /></label>
+          <label><span>Flex B Min</span><input id="graphMinB" type="number" /></label>
+          <label><span>Flex B Max</span><input id="graphMaxB" type="number" /></label>
         </div>
         <div class="voice-row">
           <button id="enableVoice" class="small-action">Enable Voice</button>

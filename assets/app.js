@@ -30,8 +30,10 @@ const defaultSettings = {
     gripZones: [],
   },
   audio: {
-    graphMin: 2800,
-    graphMax: 3040,
+    graphMinA: 2800,
+    graphMaxA: 3040,
+    graphMinB: 2270,
+    graphMaxB: 2800,
     flexARules: [
       { min: 2800, max: 2879, text: 'Halo' },
       { min: 2880, max: 2959, text: 'Apa kabar' },
@@ -119,12 +121,13 @@ function loadSettings() {
         saved.gripper.gripInMax = 2800;
       }
     }
-    if (saved.audio && (saved.audio.graphMin === 1198 || saved.audio.graphMin === 0)) {
-      saved.audio.graphMin = 2800;
-      saved.audio.graphMax = 3040;
-      saved.audio.flexARules = defaultSettings.audio.flexARules;
-      saved.audio.flexBRules = defaultSettings.audio.flexBRules;
+    if (saved.audio) {
+      if (saved.audio.graphMinA === undefined) saved.audio.graphMinA = saved.audio.graphMin !== undefined ? saved.audio.graphMin : 2800;
+      if (saved.audio.graphMaxA === undefined) saved.audio.graphMaxA = saved.audio.graphMax !== undefined ? saved.audio.graphMax : 3040;
+      if (saved.audio.graphMinB === undefined) saved.audio.graphMinB = 2270;
+      if (saved.audio.graphMaxB === undefined) saved.audio.graphMaxB = 2800;
     }
+
 
     const legacyRules = saved.audio?.rules;
     const audio = {
@@ -395,8 +398,10 @@ function initSimulator() {
     ['gripSource', ['gripper', 'gripSource']],
     ['gripInMin', ['gripper', 'gripInMin'], true],
     ['gripInMax', ['gripper', 'gripInMax'], true],
-    ['graphMin', ['audio', 'graphMin'], true],
-    ['graphMax', ['audio', 'graphMax'], true],
+    ['graphMinA', ['audio', 'graphMinA'], true],
+    ['graphMaxA', ['audio', 'graphMaxA'], true],
+    ['graphMinB', ['audio', 'graphMinB'], true],
+    ['graphMaxB', ['audio', 'graphMaxB'], true],
   ].forEach(([id, path, isNumber]) => bindSetting(id, path, isNumber));
 
   function renderCalibrationPoints(containerId, points, sourceKey, outputLabel) {
@@ -992,15 +997,13 @@ function initSimulator() {
       ctx.stroke();
     }
 
-    const graphMin = numeric(settings.audio.graphMin);
-    const graphMax = numeric(settings.audio.graphMax, 4095);
-    const drawLine = (key, color) => {
+    const drawLine = (key, color, minVal, maxVal) => {
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
       ctx.beginPath();
       graph.forEach((point, index) => {
         const x = (index / (graph.length - 1)) * width;
-        const normalized = clamp((point[key] - graphMin) / (graphMax - graphMin || 1), 0, 1);
+        const normalized = clamp((point[key] - minVal) / (maxVal - minVal || 1), 0, 1);
         const y = height - normalized * height;
         if (index === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
@@ -1008,8 +1011,13 @@ function initSimulator() {
       ctx.stroke();
     };
 
-    drawLine('flexA', '#3b82f6');
-    drawLine('flexB', '#79e39f');
+    const minA = numeric(settings.audio.graphMinA, 2800);
+    const maxA = numeric(settings.audio.graphMaxA, 3040);
+    const minB = numeric(settings.audio.graphMinB, 2270);
+    const maxB = numeric(settings.audio.graphMaxB, 2800);
+
+    drawLine('flexA', '#3b82f6', minA, maxA);
+    drawLine('flexB', '#79e39f', minB, maxB);
     ctx.fillStyle = '#8e959d';
     ctx.font = '12px Inter, system-ui, sans-serif';
     ctx.fillText('Flex A', 12, 20);
