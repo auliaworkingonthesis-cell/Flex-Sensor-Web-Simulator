@@ -94,7 +94,13 @@
             </select></label>
           <label><span>In Min</span><input id="servoInMin" type="number" /></label>
           <label><span>In Max</span><input id="servoInMax" type="number" /></label>
-          <label style="display:flex;align-items:center;justify-content:center;"><span style="color:#f4f7fb;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;">Output</span></label>
+          <label>
+            <span>Output</span>
+            <div style="display:flex;align-items:baseline;gap:5px;min-height:28px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:#08090a;">
+              <strong id="servoOutDisplay" style="font-size:15px;color:var(--text);">90</strong>
+              <small style="color:var(--muted);font-size:11px;">deg</small>
+            </div>
+          </label>
           <label><span>Out Min</span><input id="servoOutMin" type="number" /></label>
           <label><span>Out Max</span><input id="servoOutMax" type="number" /></label>
         </div>

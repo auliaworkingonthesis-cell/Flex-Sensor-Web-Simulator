@@ -287,6 +287,7 @@ function initSimulator() {
     grip: $('gripRead'),
     servo: $('servoRead'),
     servoFlex: $('servoFlexRead'),
+    servoOutDisplay: $('servoOutDisplay'),
     activeModules: $('activeModulesRead'),
     status: $('connectionStatus'),
     led: $('connectionLed'),
@@ -970,6 +971,7 @@ function initSimulator() {
       current.servo = target.servo;
       refs.needle.style.transform = `rotate(${-90 + current.servo}deg)`;
       refs.servo.textContent = Math.round(current.servo);
+      if (refs.servoOutDisplay) refs.servoOutDisplay.textContent = Math.round(current.servo);
     }
 
     if (modules.gripper) {
