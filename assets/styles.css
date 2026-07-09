@@ -752,7 +752,7 @@ h1 {
 }
 
 .rule-row {
-  grid-template-columns: 65px 65px 58px 1fr auto;
+  grid-template-columns: 65px 65px 58px 1fr max-content;
   align-items: center;
 }
 
@@ -760,6 +760,12 @@ h1 {
   padding: 4px 3px !important;
   text-align: center;
 }
+
+.rule-row button:last-child {
+  justify-self: end;
+  width: fit-content;
+}
+
 
 
 .voice-row span {
