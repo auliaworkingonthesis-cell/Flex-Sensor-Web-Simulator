@@ -752,7 +752,7 @@ h1 {
 }
 
 .rule-row {
-  grid-template-columns: 54px 54px 65px minmax(80px, 1fr) auto;
+  grid-template-columns: 48px 48px 58px 110px auto;
   align-items: center;
 }
 
