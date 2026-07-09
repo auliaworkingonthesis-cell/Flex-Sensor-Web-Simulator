@@ -273,7 +273,7 @@ h1 {
 
 .kit-shell {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
   width: min(1440px, calc(100% - 20px));
   min-height: calc(100vh - 62px);
