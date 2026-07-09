@@ -2,7 +2,7 @@ const CHANNEL_NAME = 'flex-trainer-realtime';
 const STORAGE_KEY = 'flex-trainer-payload';
 const DEVICE_KEY = 'flex-trainer-mdns';
 const SETTINGS_KEY = 'flex-trainer-settings';
-const MODULE_KEY  = 'flex-trainer-modules';
+const MODULE_KEY = 'flex-trainer-modules';
 
 const defaults = {
   flexA: 2048,
@@ -98,7 +98,7 @@ function normalizeMdns(value) {
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
-    
+
     // Auto-migrate old defaults to new hardware defaults (3040 to 2800)
     if (saved.servo && (saved.servo.inMin === 1320 || saved.servo.inMin === 0)) {
       saved.servo.inMin = 3040;
@@ -311,14 +311,14 @@ function initSimulator() {
 
   // Restore saved toggle states before reading .checked
   const savedModules = loadModuleStates();
-  if ('servo'      in savedModules) refs.servoToggle.checked      = savedModules.servo;
-  if ('gripper'    in savedModules) refs.gripperToggle.checked    = savedModules.gripper;
+  if ('servo' in savedModules) refs.servoToggle.checked = savedModules.servo;
+  if ('gripper' in savedModules) refs.gripperToggle.checked = savedModules.gripper;
   if ('graphAudio' in savedModules) refs.graphAudioToggle.checked = savedModules.graphAudio;
-  if ('flasher'    in savedModules) refs.flasherToggle.checked    = savedModules.flasher;
+  if ('flasher' in savedModules) refs.flasherToggle.checked = savedModules.flasher;
 
   const urlParams = new URLSearchParams(window.location.search);
   const showFlasher = urlParams.has('admin') || urlParams.has('flasher');
-  
+
   // Hide flasher module card physically by default if not admin/flasher parameter
   const flasherCard = document.querySelector('[data-module-card="flasher"]');
   if (flasherCard && !showFlasher) {
@@ -525,13 +525,13 @@ function initSimulator() {
     if (serialWriter) {
       try {
         serialWriter.releaseLock();
-      } catch {}
+      } catch { }
       serialWriter = null;
     }
     if (serialReader) {
       try {
         await serialReader.cancel();
-      } catch {}
+      } catch { }
     }
     if (serialPort) {
       try {
@@ -539,7 +539,7 @@ function initSimulator() {
           await new Promise((resolve) => window.setTimeout(resolve, 0));
         }
         await serialPort.close();
-      } catch {}
+      } catch { }
       serialPort = null;
     }
   }
@@ -554,7 +554,7 @@ function initSimulator() {
           acceptPayload({ flexA: data.flexA, flexB: data.flexB }, 'Serial ESP32');
           setConnectionStatus('Connected: Serial ESP32', 'green');
         }
-      } catch {}
+      } catch { }
       return;
     }
     // Format lama: "FlexA:xxx FlexB:xxx" — tetap didukung untuk kompatibilitas
@@ -695,13 +695,13 @@ function initSimulator() {
     document.querySelector('[data-module-card="gripper"]').classList.toggle('module-off', !modules.gripper);
     document.querySelector('[data-module-card="graphAudio"]').classList.toggle('module-off', !modules.graphAudio);
     document.querySelector('[data-module-card="flasher"]').classList.toggle('module-off', !modules.flasher);
-    
+
     // Count active modules, excluding flasher if hidden
     const visibleActiveCount = Object.keys(modules)
       .filter(key => key !== 'flasher' || showFlasher)
       .map(key => modules[key])
       .filter(Boolean).length;
-      
+
     refs.activeModules.textContent = visibleActiveCount;
   }
 
@@ -709,10 +709,10 @@ function initSimulator() {
     toggle.addEventListener('change', () => {
       syncModuleState();
       saveModuleStates({
-        servo:      refs.servoToggle.checked,
-        gripper:    refs.gripperToggle.checked,
+        servo: refs.servoToggle.checked,
+        gripper: refs.gripperToggle.checked,
         graphAudio: refs.graphAudioToggle.checked,
-        flasher:    refs.flasherToggle.checked,
+        flasher: refs.flasherToggle.checked,
       });
     });
   });
@@ -786,14 +786,14 @@ function initSimulator() {
       fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         // Batasi ukuran file hingga 1MB (1.048.576 bytes) untuk mencegah melebihi kuota LocalStorage
         if (file.size > 1024 * 1024) {
           alert('Ukuran file suara terlalu besar! Harap upload file audio berukuran kurang dari 1MB (disarankan potongan suara pendek / efek alarm).');
           fileInput.value = '';
           return;
         }
-        
+
         const reader = new FileReader();
         reader.onload = (evt) => {
           rule.audioData = evt.target.result;
@@ -853,23 +853,23 @@ function initSimulator() {
   function handleAudioFeedback(flexA, flexB, settings) {
     if (!voiceEnabled || !modules.graphAudio) return;
     const now = performance.now();
-    
+
     // Find active rules
     const activeRuleA = settings.audio.flexARules.find(r => flexA >= numeric(r.min) && flexA <= numeric(r.max));
     const activeRuleB = settings.audio.flexBRules.find(r => flexB >= numeric(r.min) && flexB <= numeric(r.max));
-    
+
     const activeRules = [activeRuleA, activeRuleB].filter(Boolean);
     if (activeRules.length === 0) return;
-    
+
     // Process first active rule
     const activeRule = activeRules[0];
     const ruleId = `${activeRule.min}_${activeRule.max}_${activeRule.type || 'tts'}_${activeRule.text || ''}_${activeRule.audioName || ''}`;
-    
+
     if (ruleId === lastRuleId && now - lastAudioPlayAt < 1500) return;
-    
+
     lastRuleId = ruleId;
     lastAudioPlayAt = now;
-    
+
     if (activeRule.type === 'audio' && activeRule.audioData) {
       try {
         if ('speechSynthesis' in window) speechSynthesis.cancel();
@@ -1219,7 +1219,7 @@ function initVirtualEsp32() {
   const virtualMdnsInput = $('virtualMdnsInput');
   const espSketch = $('espSketch');
   const copySketch = $('copySketch');
-  const channel = createChannel(() => {});
+  const channel = createChannel(() => { });
   const settings = loadSettings();
 
   espSketch.textContent = sketch;
