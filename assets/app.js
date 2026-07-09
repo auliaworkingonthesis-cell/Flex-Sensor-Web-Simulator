@@ -61,13 +61,18 @@ function mapCalibrated(value, inMin, inMax, outMin, outMax) {
   return outMin + ratio * (outMax - outMin);
 }
 
-function mapCalibrationPoints(value, points, fallback) {
-  const normalized = points
+function mapCalibrationPoints(value, points, inMin, inMax, outMin, outMax, fallback) {
+  const bounds = [
+    { adc: numeric(inMin, NaN), output: numeric(outMin, NaN) },
+    { adc: numeric(inMax, NaN), output: numeric(outMax, NaN) }
+  ];
+
+  const normalized = [...points, ...bounds]
     .map((point) => ({ adc: numeric(point.adc, NaN), output: numeric(point.output, NaN) }))
     .filter((point) => Number.isFinite(point.adc) && Number.isFinite(point.output))
     .sort((a, b) => a.adc - b.adc);
   const unique = normalized.filter((point, index) => index === 0 || point.adc !== normalized[index - 1].adc);
-  if (unique.length < 2 || unique.length !== normalized.length) return fallback();
+  if (unique.length < 2) return fallback();
   if (value <= unique[0].adc) return unique[0].output;
   if (value >= unique.at(-1).adc) return unique.at(-1).output;
   const upperIndex = unique.findIndex((point) => point.adc >= value);
@@ -227,11 +232,11 @@ function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
     flexA: Math.round(flex.flexA),
     flexB: Math.round(flex.flexB),
     pan: round(mapCalibrated(
-      mapCalibrationZones(armInput, settings.gripper.armZones, () => mapCalibrationPoints(armInput, settings.gripper.armPoints, () => mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, 0, 100))),
+      mapCalibrationZones(armInput, settings.gripper.armZones, () => mapCalibrationPoints(armInput, settings.gripper.armPoints, settings.gripper.armInMin, settings.gripper.armInMax, 0, 100, () => mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, 0, 100))),
       0, 100, 100, -100,  // Reversed: flex bengkok → rack ke arah yang benar
     ), 1),
-    servo: round(mapCalibrationZones(servoInput, settings.servo.zones, () => mapCalibrationPoints(servoInput, settings.servo.points, () => mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax))), 1),
-    grip: round(mapCalibrationZones(gripInput, settings.gripper.gripZones, () => mapCalibrationPoints(gripInput, settings.gripper.gripPoints, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 100, 0))), 1),  // Reversed
+    servo: round(mapCalibrationZones(servoInput, settings.servo.zones, () => mapCalibrationPoints(servoInput, settings.servo.points, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax, () => mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax))), 1),
+    grip: round(mapCalibrationZones(gripInput, settings.gripper.gripZones, () => mapCalibrationPoints(gripInput, settings.gripper.gripPoints, settings.gripper.gripInMin, settings.gripper.gripInMax, 100, 0, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 100, 0))), 1),  // Reversed
     phrase: phraseFromFlexes(flex.flexA, flex.flexB, settings),
     mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
