@@ -130,7 +130,7 @@ void loop() {
         
         char json[128];
         snprintf(json, sizeof(json),
-            "DATA:\"{\\\"flexA\\\":%d,\\\"flexB\\\":%d,\\\"pan\\\":%d,\\\"servo\\\":%.1f,\\\"grip\\\":%d,\\\"phrase\\\":\\\"\\\"}\"",
+            "DATA:{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d,\"phrase\":\"\"}",
             rawA, rawB, panPct, (float)angle, gripPct);
         Serial.println(json);
     }
