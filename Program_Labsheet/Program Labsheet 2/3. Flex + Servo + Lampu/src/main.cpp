@@ -19,12 +19,12 @@
 // Kalibrasi ADC pembagi tegangan 22K (5V supply)
 // Nilai lurus (tidak bengkok) → ADC tinggi
 // Nilai bengkok maksimal     → ADC rendah
-#define FLEX_A_MIN  3054  // ADC saat lurus
-#define FLEX_A_MAX  2766  // ADC saat bengkok maksimal
+#define FLEX_A_MIN  3000  // ADC saat lurus
+#define FLEX_A_MAX  2800  // ADC saat bengkok maksimal
 
 // Threshold LED
-#define THRESHOLD_GREEN   2910
-#define THRESHOLD_YELLOW  2795
+#define THRESHOLD_GREEN   3000
+#define THRESHOLD_YELLOW  2880
 
 Servo myServo;
 int lastAngle = -1;

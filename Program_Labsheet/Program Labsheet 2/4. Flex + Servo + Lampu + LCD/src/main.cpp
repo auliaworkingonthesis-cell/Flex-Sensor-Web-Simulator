@@ -21,11 +21,11 @@
 // Nilai lurus (tidak bengkok) → ADC tinggi
 // Nilai bengkok maksimal     → ADC rendah
 #define FLEX_A_MIN  3000  // ADC saat lurus
-#define FLEX_A_MAX  2790  // ADC saat bengkok maksimal
+#define FLEX_A_MAX  2723  // ADC saat bengkok maksimal
 
 // Threshold LED
 #define THRESHOLD_GREEN   2910
-#define THRESHOLD_YELLOW  2795
+#define THRESHOLD_YELLOW  2790
 
 Servo myServo;
 LiquidCrystal_I2C lcd(0x27, 16, 4);
