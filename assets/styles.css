@@ -342,7 +342,7 @@ h1 {
 
 .module-grid {
   display: grid;
-  grid-template-columns: 0.82fr 1.18fr 0.9fr;
+  grid-template-columns: 0.8fr 1.0fr 1.2fr;
   gap: 10px;
   min-height: 0;
 }
@@ -752,9 +752,15 @@ h1 {
 }
 
 .rule-row {
-  grid-template-columns: 50px 50px 65px minmax(80px, 1fr) auto;
+  grid-template-columns: 54px 54px 65px minmax(80px, 1fr) auto;
   align-items: center;
 }
+
+.rule-row input {
+  padding: 4px 3px !important;
+  text-align: center;
+}
+
 
 .voice-row span {
   grid-column: 1 / -1;
