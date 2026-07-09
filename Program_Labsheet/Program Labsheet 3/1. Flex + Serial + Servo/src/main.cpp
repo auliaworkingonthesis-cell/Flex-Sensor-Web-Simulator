@@ -47,7 +47,8 @@
 #include <ESP32Servo.h>
 
 Servo myServo;
-int lastAngle = -1;
+int lastAngle  = -1;
+int webServoAngle = 90; // Sudut dari web (diupdate via SERVO: command)
 unsigned long lastSensorUpdate = 0;
 
 // Fungsi untuk membaca rata-rata analog (Oversampling 20 sampel untuk stabilitas)
@@ -103,18 +104,12 @@ void loop() {
         int rawB = 0;
 #endif
 
-        // Gerakkan Servo Fisik (selalu ikut Flex A jika aktif)
-#ifdef USE_FLEX_A
-        int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
-#elif defined(USE_FLEX_B)
-        int angle = mapClamped(rawB, flexB_min, flexB_max, 0, 180);
-#else
-        int angle = 90;
-#endif
-
-        if (angle != lastAngle) {
-            myServo.write(angle); // Langsung sesuai web, tanpa inversi
-            lastAngle = angle;
+        // Servo fisik: ikut sudut dari web (sudah hitung kalibrasi)
+        // Inversi karena servo terpasang terbalik secara fisik
+        int physAngle = 180 - webServoAngle;
+        if (physAngle != lastAngle) {
+            myServo.write(physAngle);
+            lastAngle = physAngle;
         }
         
         // Kirim Stream JSON untuk Web Simulator
@@ -148,10 +143,17 @@ void loop() {
         return json.substring(start, end).toInt();
     };
 
-    // ── 2. Terima Perintah Kalibrasi Baru dari Web ───────────────────────────
+    // ── 2. Terima Perintah dari Web ──────────────────────────────────────────
     while (Serial.available()) {
         String line = Serial.readStringUntil('\n');
         line.trim();
+
+        // Terima sudut servo langsung dari web
+        if (line.startsWith("SERVO:")) {
+            webServoAngle = constrain(line.substring(6).toInt(), 0, 180);
+        }
+
+        // Terima update kalibrasi dari web
         if (line.startsWith("SET:")) {
             String jsonStr = line.substring(4);
 #ifdef USE_FLEX_A

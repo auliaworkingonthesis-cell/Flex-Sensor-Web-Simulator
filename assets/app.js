@@ -346,6 +346,7 @@ function initSimulator() {
   let serialReader = null;
   let serialWriter = null;
   let serialActive = false;
+  let lastSentServoAngle = -1; // Tracking last angle sent to ESP32
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
 
@@ -974,6 +975,13 @@ function initSimulator() {
       refs.needle.style.transform = `rotate(${-90 + current.servo}deg)`;
       refs.servo.textContent = Math.round(current.servo);
       if (refs.servoOutDisplay) refs.servoOutDisplay.textContent = Math.round(current.servo);
+
+      // Kirim sudut servo ke ESP32 via Serial agar servo real sync dengan web
+      const servoAngle = Math.round(current.servo);
+      if (servoAngle !== lastSentServoAngle && serialActive && serialWriter) {
+        lastSentServoAngle = servoAngle;
+        serialWriter.write(encoder.encode(`SERVO:${servoAngle}\n`)).catch(() => {});
+      }
     }
 
     if (modules.gripper) {
