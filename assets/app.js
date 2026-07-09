@@ -173,13 +173,20 @@ function syncSettingsToHardware(settings) {
       }
     }
 
-    // 2. Sinkronisasi via Wi-Fi Web Server jika terhubung mDNS/IP
-    if (selectedMdns) {
+    // 2. Sinkronisasi via Wi-Fi Web Server / WebSocket jika terhubung mDNS/IP
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(`SET:{"minA":${minA},"maxA":${maxA},"minB":${minB},"maxB":${maxB}}\n`);
+        console.log("Hardware: Berhasil kalibrasi via WebSocket!");
+      } catch (e) {
+        console.error("Gagal sinkronisasi kalibrasi via WebSocket", e);
+      }
+    } else if (selectedMdns) {
       try {
         await fetch(`http://${selectedMdns}/config?minA=${minA}&maxA=${maxA}&minB=${minB}&maxB=${maxB}`, { mode: 'no-cors' });
-        console.log("Hardware: Berhasil kalibrasi via Wi-Fi!");
+        console.log("Hardware: Berhasil kalibrasi via Wi-Fi HTTP!");
       } catch (e) {
-        console.error("Gagal sinkronisasi kalibrasi via Wi-Fi", e);
+        console.error("Gagal sinkronisasi kalibrasi via Wi-Fi HTTP", e);
       }
     }
   }, 600);
@@ -352,6 +359,8 @@ function initSimulator() {
   let serialActive = false;
   let lastSentServoAngle = -1; // Tracking last angle sent to ESP32
   const encoder = new TextEncoder(); // Global encoder for serial transmissions
+  let ws = null; // WebSocket connection object
+  let wsUserClose = false; // Flag to prevent automatic reconnection when user manually disconnects
 
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
@@ -598,45 +607,70 @@ function initSimulator() {
     }
   }
 
-  async function pollEsp32() {
-    if (!espPolling || !selectedMdns) return;
-    try {
-      const response = await fetch(`http://${selectedMdns}/data`, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (typeof data.flexA !== 'number' || typeof data.flexB !== 'number') throw new Error('Invalid payload');
-      pollFailures = 0;
-      acceptPayload({ flexA: data.flexA, flexB: data.flexB, mdns: selectedMdns }, `ESP32 ${selectedMdns}`);
+  function disconnectWifi() {
+    wsUserClose = true;
+    if (ws) {
+      try {
+        ws.close();
+      } catch (e) {}
+      ws = null;
+    }
+  }
+
+  function connectWebSocket() {
+    if (wsUserClose || !selectedMdns) return;
+    const wsUrl = `ws://${selectedMdns}:81`;
+    console.log(`Connecting to WebSocket: ${wsUrl}`);
+    setHeaderStatus(`Connecting: ${selectedMdns}`, 'yellow');
+    setConnectionStatus(`Connecting: ${selectedMdns}`, 'yellow');
+    
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('WebSocket Connected!');
+      setHeaderStatus('ESP32 WiFi', 'green');
       setConnectionStatus(`Connected: ${selectedMdns}`, 'green');
-    } catch {
-      pollFailures++;
-      if (pollFailures >= 5) {
+      // Kirim kalibrasi saat pertama kali tersambung
+      syncSettingsToHardware(settings);
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (typeof data.flexA === 'number' && typeof data.flexB === 'number') {
+          acceptPayload({ flexA: data.flexA, flexB: data.flexB, mdns: selectedMdns }, `ESP32 ${selectedMdns}`);
+        }
+      } catch (e) {
+        console.error('Failed to parse WebSocket message', e);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket Closed');
+      if (!wsUserClose) {
         setHeaderStatus('Reconnecting - ESP32 unavailable', 'yellow');
         setConnectionStatus(`Reconnecting: ${selectedMdns}`, 'yellow');
+        setTimeout(connectWebSocket, 1500); // Auto reconnect
       }
-    } finally {
-      if (espPolling) pollTimer = window.setTimeout(pollEsp32, pollFailures ? 80 : 20);
-    }
+    };
   }
 
   refs.connectEsp.addEventListener('click', async () => {
     await disconnectSerial();
+    disconnectWifi();
     selectedMdns = normalizeMdns(refs.mdnsInput.value);
     refs.mdnsInput.value = selectedMdns.replace('.local', '');
     localStorage.setItem(DEVICE_KEY, selectedMdns);
     if (!selectedMdns) {
-      espPolling = false;
-      window.clearTimeout(pollTimer);
       setConnectionStatus('Virtual/manual mode', 'yellow');
       return;
     }
-    espPolling = true;
-    pollFailures = 0;
-    window.clearTimeout(pollTimer);
-    setConnectionStatus(`Connecting: ${selectedMdns}`, 'yellow');
-    pollEsp32();
-    // Kirim kalibrasi saat pertama kali WiFi tersambung
-    window.setTimeout(() => syncSettingsToHardware(settings), 1200);
+    wsUserClose = false;
+    connectWebSocket();
   });
 
   refs.connectSerial.addEventListener('click', async () => {
@@ -681,6 +715,7 @@ function initSimulator() {
     espPolling = false;
     pollFailures = 0;
     window.clearTimeout(pollTimer);
+    disconnectWifi();
     await disconnectSerial();
     setHeaderStatus('Disconnected', 'red');
     setConnectionStatus('Disconnected', 'red');
@@ -984,12 +1019,17 @@ function initSimulator() {
       if (refs.servoOutDisplay) refs.servoOutDisplay.textContent = Math.round(current.servo);
     }
 
-    // Kirim sudut servo ke ESP32 via Serial jika modul servo ATAU scara/gripper aktif
+    // Kirim sudut servo ke ESP32 via Serial/WebSocket jika modul servo ATAU scara/gripper aktif
     if (modules.servo || modules.gripper) {
       const servoAngle = Math.round(current.servo);
-      if (servoAngle !== lastSentServoAngle && serialActive && serialWriter) {
-        lastSentServoAngle = servoAngle;
-        serialWriter.write(encoder.encode(`SERVO:${servoAngle}\n`)).catch(() => {});
+      if (servoAngle !== lastSentServoAngle) {
+        if (serialActive && serialWriter) {
+          lastSentServoAngle = servoAngle;
+          serialWriter.write(encoder.encode(`SERVO:${servoAngle}\n`)).catch(() => {});
+        } else if (ws && ws.readyState === WebSocket.OPEN) {
+          lastSentServoAngle = servoAngle;
+          ws.send(`SERVO:${servoAngle}\n`);
+        }
       }
     }
 

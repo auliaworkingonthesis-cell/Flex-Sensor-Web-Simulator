@@ -31,8 +31,8 @@
 #define SERVO_PIN        18     // Pin PWM Servo Motor
 
 // ── KONFIGURASI WI-FI ────────────────────────────────────────────────────────
-#define WIFI_SSID        "NAMA_WIFI"
-#define WIFI_PASSWORD    "PASSWORD_WIFI"
+#define WIFI_SSID        "FLEXIBLE"
+#define WIFI_PASSWORD    "FLEX12345"
 #define MDNS_NAME        "flex-kelompok1"   // Akses via http://flex-kelompok1.local
 
 // ── KALIBRASI ADC ────────────────────────────────────────────────────────────
@@ -53,10 +53,13 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <ESP32Servo.h>
+#include <WebSocketsServer.h>
 
 WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 Servo myServo;
 int lastAngle = -1;
+int webServoAngle = 90; // Sudut dari web (diupdate via WebSocket SERVO: command)
 unsigned long lastServoUpdate = 0;
 
 // Fungsi untuk membaca rata-rata analog (Oversampling 20 sampel untuk stabilitas)
@@ -88,17 +91,13 @@ void handleData() {
 #ifdef USE_FLEX_A
     int rawA = readAverage(FLEX_A_PIN);
     int panPct = mapClamped(rawA, flexA_min, flexA_max, 100, -100);
-    int angle  = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
 #else
-    int rawA = 0, panPct = 0, angle = 90;
+    int rawA = 0, panPct = 0;
 #endif
 
 #ifdef USE_FLEX_B
     int rawB    = readAverage(FLEX_B_PIN);
     int gripPct = mapClamped(rawB, flexB_min, flexB_max, 100, 0);
-    #ifndef USE_FLEX_A
-        angle = mapClamped(rawB, flexB_min, flexB_max, 0, 180);
-    #endif
 #else
     int rawB = 0, gripPct = 0;
 #endif
@@ -106,7 +105,7 @@ void handleData() {
     char json[256];
     snprintf(json, sizeof(json),
         "{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d}",
-        rawA, rawB, panPct, (float)angle, gripPct);
+        rawA, rawB, panPct, (float)webServoAngle, gripPct);
         
     server.send(200, "application/json", json);
 }
@@ -124,6 +123,38 @@ void handleSetConfig() {
     
     Serial.println("System: Calibration updated via Web!");
     server.send(200, "text/plain", "OK");
+}
+
+// Helper flat JSON parser
+int parseVal(String json, String key, int currentVal) {
+    int idx = json.indexOf("\"" + key + "\":");
+    if (idx == -1) return currentVal;
+    int start = idx + key.length() + 3;
+    int end = json.indexOf(",", start);
+    if (end == -1) end = json.indexOf("}", start);
+    if (end == -1) return currentVal;
+    return json.substring(start, end).toInt();
+}
+
+void webSocketEvent(uint8_t num, WSType_t type, uint8_t * payload, size_t length) {
+    if (type == WSType_TEXT) {
+        String msg = String((char*)payload);
+        msg.trim();
+        if (msg.startsWith("SERVO:")) {
+            webServoAngle = constrain(msg.substring(6).toInt(), 0, 180);
+        } else if (msg.startsWith("SET:")) {
+            String jsonStr = msg.substring(4);
+#ifdef USE_FLEX_A
+            flexA_min = parseVal(jsonStr, "minA", flexA_min);
+            flexA_max = parseVal(jsonStr, "maxA", flexA_max);
+#endif
+#ifdef USE_FLEX_B
+            flexB_min = parseVal(jsonStr, "minB", flexB_min);
+            flexB_max = parseVal(jsonStr, "maxB", flexB_max);
+#endif
+            Serial.println("System: Calibration updated via WebSocket!");
+        }
+    }
 }
 
 void setup() {
@@ -163,37 +194,61 @@ void setup() {
     server.on("/data",   HTTP_OPTIONS, []() { sendCorsHeaders(); server.send(204); });
     server.on("/config", HTTP_GET,     handleSetConfig);
     server.begin();
+
+    // Inisialisasi WebSocket Server
+    webSocket.begin();
+    webSocket.onEvent(webSocketEvent);
+    Serial.println("WebSocket Server started on port 81");
 }
 
 void loop() {
     server.handleClient();
+    webSocket.loop();
     
     unsigned long now = millis();
     
-    // ── Update servo fisik mengikuti lekukan Sensor Flex (Setiap 20ms) ──────
+    // ── Update sensor & servo fisik & kirim data (Setiap 20ms) ──────────────
     if (now - lastServoUpdate >= 20) {
         lastServoUpdate = now;
         
 #ifdef USE_FLEX_A
-        int rawA  = readAverage(FLEX_A_PIN);
-        int angle = mapClamped(rawA, flexA_min, flexA_max, 0, 180);
-#ifdef USE_FLEX_B
-        int rawB  = readAverage(FLEX_B_PIN);
-        Serial.printf("Flex A: %d | Flex B: %d | Servo: %d deg\n", rawA, rawB, angle);
+        int rawA = readAverage(FLEX_A_PIN);
 #else
-        Serial.printf("Flex A: %d | Servo: %d deg\n", rawA, angle);
-#endif
-#elif defined(USE_FLEX_B)
-        int rawB  = readAverage(FLEX_B_PIN);
-        int angle = mapClamped(rawB, flexB_min, flexB_max, 0, 180);
-        Serial.printf("Flex B: %d | Servo: %d deg\n", rawB, angle);
-#else
-        int angle = 90;
+        int rawA = 0;
 #endif
 
-        if (angle != lastAngle) {
-            myServo.write(180 - angle); // Inversi hardware servo fisik
-            lastAngle = angle;
+#ifdef USE_FLEX_B
+        int rawB = readAverage(FLEX_B_PIN);
+#else
+        int rawB = 0;
+#endif
+
+        // Servo fisik: ikut sudut dari web (sudah hitung kalibrasi)
+        // Inversi karena servo terpasang terbalik secara fisik
+        int physAngle = 180 - webServoAngle;
+        if (physAngle != lastAngle) {
+            myServo.write(physAngle);
+            lastAngle = physAngle;
         }
+        
+#ifdef USE_FLEX_A
+        int panPct = mapClamped(rawA, flexA_min, flexA_max, 100, -100);
+#else
+        int panPct = 0;
+#endif
+
+#ifdef USE_FLEX_B
+        int gripPct = mapClamped(rawB, flexB_min, flexB_max, 100, 0);
+#else
+        int gripPct = 0;
+#endif
+        
+        // Kirim Stream JSON untuk Web Simulator via WebSocket
+        char json[128];
+        snprintf(json, sizeof(json),
+            "{\"flexA\":%d,\"flexB\":%d,\"pan\":%d,\"servo\":%.1f,\"grip\":%d}",
+            rawA, rawB, panPct, (float)webServoAngle, gripPct);
+        webSocket.broadcastTXT(json);
     }
 }
+
