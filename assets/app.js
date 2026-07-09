@@ -893,6 +893,7 @@ function initSimulator() {
 
   let lastRuleId = null;
   let lastAudioPlayAt = 0;
+  let activeRulePlayCount = 0; // Melacak jumlah loop pemutaran suara aturan aktif
 
   function handleAudioFeedback(flexA, flexB, settings) {
     if (!voiceEnabled || !modules.graphAudio) return;
@@ -903,16 +904,28 @@ function initSimulator() {
     const activeRuleB = settings.audio.flexBRules.find(r => flexB >= numeric(r.min) && flexB <= numeric(r.max));
 
     const activeRules = [activeRuleA, activeRuleB].filter(Boolean);
-    if (activeRules.length === 0) return;
+    if (activeRules.length === 0) {
+      lastRuleId = null; // Reset agar saat masuk ke threshold lagi suara bisa bunyi
+      activeRulePlayCount = 0;
+      return;
+    }
 
     // Process first active rule
     const activeRule = activeRules[0];
     const ruleId = `${activeRule.min}_${activeRule.max}_${activeRule.type || 'tts'}_${activeRule.text || ''}_${activeRule.audioName || ''}`;
 
-    if (ruleId === lastRuleId && now - lastAudioPlayAt < 1500) return;
+    if (ruleId === lastRuleId) {
+      if (activeRulePlayCount >= 3) return; // Batasi maksimal 3 kali putar (loop) jika stay
+      if (now - lastAudioPlayAt < 1500) return;
+      activeRulePlayCount++;
+    } else {
+      // Aturan baru terpicu, reset counter ke 1
+      lastRuleId = ruleId;
+      activeRulePlayCount = 1;
+    }
 
-    lastRuleId = ruleId;
     lastAudioPlayAt = now;
+
 
     if (activeRule.type === 'audio' && activeRule.audioData) {
       try {
