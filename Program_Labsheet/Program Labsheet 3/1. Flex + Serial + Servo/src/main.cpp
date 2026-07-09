@@ -113,7 +113,7 @@ void loop() {
 #endif
 
         if (angle != lastAngle) {
-            myServo.write(180 - angle); // Inversi hardware servo fisik
+            myServo.write(angle); // Langsung sesuai web, tanpa inversi
             lastAngle = angle;
         }
         
