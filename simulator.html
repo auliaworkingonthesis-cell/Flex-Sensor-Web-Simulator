@@ -69,14 +69,14 @@
             <small><span id="servoRead">90</span> deg</small>
           </div>
         </div>
-        <div class="settings-grid servo-settings">
+        <div class="settings-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
           <label><span>Input</span><select id="servoSource">
               <option value="flexA">Flex A</option>
               <option value="flexB">Flex B</option>
             </select></label>
           <label><span>In Min</span><input id="servoInMin" type="number" /></label>
           <label><span>In Max</span><input id="servoInMax" type="number" /></label>
-          <label class="servo-out-label"><span>Output</span></label>
+          <label style="display:flex;align-items:flex-end;padding-bottom:6px;"><span style="color:var(--cyan);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;">Output</span></label>
           <label><span>Out Min</span><input id="servoOutMin" type="number" /></label>
           <label><span>Out Max</span><input id="servoOutMax" type="number" /></label>
         </div>
