@@ -111,23 +111,25 @@ function loadSettings() {
       saved.servo.inMin = 3040;
       saved.servo.inMax = 2800;
     }
+    let migrated = false;
     if (saved.gripper) {
       if (saved.gripper.armInMin === 1320 || saved.gripper.armInMin === 0) {
         saved.gripper.armInMin = 3040;
         saved.gripper.armInMax = 2800;
+        migrated = true;
       }
+
       if (saved.gripper.gripInMin === 1320 || saved.gripper.gripInMin === 0) {
         saved.gripper.gripInMin = 3040;
         saved.gripper.gripInMax = 2800;
       }
     }
     if (saved.audio) {
-      if (saved.audio.graphMinA === undefined) saved.audio.graphMinA = saved.audio.graphMin !== undefined ? saved.audio.graphMin : 2800;
-      if (saved.audio.graphMaxA === undefined) saved.audio.graphMaxA = saved.audio.graphMax !== undefined ? saved.audio.graphMax : 3040;
-      if (saved.audio.graphMinB === undefined) saved.audio.graphMinB = 2270;
-      if (saved.audio.graphMaxB === undefined) saved.audio.graphMaxB = 2800;
+      if (saved.audio.graphMinA === undefined) { saved.audio.graphMinA = saved.audio.graphMin !== undefined ? saved.audio.graphMin : 2800; migrated = true; }
+      if (saved.audio.graphMaxA === undefined) { saved.audio.graphMaxA = saved.audio.graphMax !== undefined ? saved.audio.graphMax : 3040; migrated = true; }
+      if (saved.audio.graphMinB === undefined) { saved.audio.graphMinB = 2270; migrated = true; }
+      if (saved.audio.graphMaxB === undefined) { saved.audio.graphMaxB = 2800; migrated = true; }
     }
-
 
     const legacyRules = saved.audio?.rules;
     const audio = {
@@ -138,7 +140,8 @@ function loadSettings() {
     };
     delete audio.source;
     delete audio.rules;
-    return {
+
+    const fullSettings = {
       servo: { ...defaultSettings.servo, ...saved.servo, points: saved.servo?.points || [], zones: saved.servo?.zones || [] },
       gripper: {
         ...defaultSettings.gripper,
@@ -150,6 +153,13 @@ function loadSettings() {
       },
       audio,
     };
+
+    // Jika terjadi migrasi data baru, simpan ulang ke LocalStorage agar permanen
+    if (migrated) {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(fullSettings));
+    }
+
+    return fullSettings;
   } catch {
     return structuredClone(defaultSettings);
   }
