@@ -298,8 +298,10 @@ function createChannel(onPayload) {
 }
 
 function initSimulator() {
-  const $ = (id) => document.getElementById(id);
-  const refs = {
+  try {
+    const $ = (id) => document.getElementById(id);
+    const refs = {
+
     arm: $('armGroup'),
     leftJaw: $('leftJaw'),
     rightJaw: $('rightJaw'),
@@ -386,6 +388,7 @@ function initSimulator() {
 
   function bindSetting(id, path, isNumber = false) {
     const element = $(id);
+    if (!element) return; // Cegah crash jika HTML lawas ter-cache dan element tidak ditemukan!
     const [section, key] = path;
     element.value = settings[section][key];
     element.addEventListener('input', () => {
@@ -395,6 +398,7 @@ function initSimulator() {
       renderAudioRules();
     });
   }
+
 
   [
     ['servoSource', ['servo', 'source']],
@@ -1105,6 +1109,10 @@ function initSimulator() {
   refs.rightJaw.style.transformOrigin = '436px 306px';
   drawChart();
   requestAnimationFrame(draw);
+  } catch (err) {
+    console.error("FATAL ERROR in initSimulator:", err);
+    alert("FATAL ERROR: " + err.message + "\nStack: " + err.stack);
+  }
 }
 
 const sketch = `#include <WiFi.h>
