@@ -23,7 +23,7 @@
 
 // ── PILIH SENSOR YANG DIGUNAKAN ──────────────────────────────────────────────
 #define USE_FLEX_A              // Aktifkan Sensor Flex A (Pan + Servo)
-// #define USE_FLEX_B           // Non-aktif: aktifkan jika Flex B disambungkan
+#define USE_FLEX_B           // Non-aktif: aktifkan jika Flex B disambungkan
 
 // ── PIN HARDWARE ─────────────────────────────────────────────────────────────
 #define FLEX_A_PIN  34          // Pin ADC Sensor Flex A
@@ -32,13 +32,13 @@
 
 // ── KALIBRASI ADC (Sesuaikan dengan hasil pengukuran sensor) ─────────────────
 #ifdef USE_FLEX_A
-    int flexA_min = 3054;       // ADC saat Flex A lurus
-    int flexA_max = 2766;       // ADC saat Flex A bengkok maksimal
+    int flexA_min = 3050;       // ADC saat Flex A lurus
+    int flexA_max = 2790;       // ADC saat Flex A bengkok maksimal
 #endif
 
 #ifdef USE_FLEX_B
-    int flexB_min = 3054;       // ADC saat Flex B lurus
-    int flexB_max = 2766;       // ADC saat Flex B bengkok maksimal
+    int flexB_min = 2270;       // ADC saat Flex B lurus
+    int flexB_max = 2800;       // ADC saat Flex B bengkok maksimal
 #endif
 // ─────────────────────────────────────────────────────────────────────────────
 

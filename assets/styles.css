@@ -790,11 +790,18 @@ h1 {
 .readout-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 6px;
+  margin-top: 0;
 }
 
 .readout-strip div {
-  padding: 7px 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--panel);
 }
 
 .readout-strip span,
@@ -802,8 +809,24 @@ h1 {
   display: block;
 }
 
+.readout-strip span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.readout-strip strong {
+  font-size: 18px;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
 .readout-strip small {
   color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .virtual-layout {
