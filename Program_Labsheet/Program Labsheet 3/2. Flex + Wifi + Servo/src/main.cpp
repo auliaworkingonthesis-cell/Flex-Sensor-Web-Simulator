@@ -136,8 +136,8 @@ int parseVal(String json, String key, int currentVal) {
     return json.substring(start, end).toInt();
 }
 
-void webSocketEvent(uint8_t num, WSType_t type, uint8_t * payload, size_t length) {
-    if (type == WSType_TEXT) {
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+    if (type == WStype_TEXT) {
         String msg = String((char*)payload);
         msg.trim();
         if (msg.startsWith("SERVO:")) {
