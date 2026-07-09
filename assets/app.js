@@ -161,7 +161,6 @@ function syncSettingsToHardware(settings) {
     if (serialActive && serialPort && serialWriter) {
       try {
         const cmd = `SET:{"minA":${minA},"maxA":${maxA},"minB":${minB},"maxB":${maxB}}\n`;
-        const encoder = new TextEncoder();
         await serialWriter.write(encoder.encode(cmd));
         console.log("Hardware: Berhasil kalibrasi via Serial USB!");
       } catch (e) {
@@ -347,6 +346,8 @@ function initSimulator() {
   let serialWriter = null;
   let serialActive = false;
   let lastSentServoAngle = -1; // Tracking last angle sent to ESP32
+  const encoder = new TextEncoder(); // Global encoder for serial transmissions
+
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
 
