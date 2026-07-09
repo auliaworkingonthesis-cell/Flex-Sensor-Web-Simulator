@@ -1,13 +1,5 @@
 #include <Arduino.h>
 
-#ifndef FLEX_B_PIN
-#define FLEX_B_PIN 35
-#endif
-
-#ifndef USE_FLEX_A_FOR_SERVO
-#define USE_FLEX_A_FOR_SERVO true
-#endif
-
 // Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
 int readAverage(int pin) {
     long sum = 0;
@@ -38,7 +30,7 @@ void setup() {
     analogReadResolution(12);
     // Set atenuasi 11dB agar ADC bisa membaca tegangan 3.3V
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
-    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
+   
     
     Serial.println("Program Labsheet 1 - Serial Monitor Ready (Average)");
 }

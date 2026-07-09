@@ -1,13 +1,5 @@
 #include <Arduino.h>
 
-#ifndef FLEX_B_PIN
-#define FLEX_B_PIN 35
-#endif
-
-#ifndef USE_FLEX_A_FOR_SERVO
-#define USE_FLEX_A_FOR_SERVO true
-#endif
-
 // Fungsi untuk membaca rata-rata analog (Oversampling 10 sampel untuk stabilitas)
 int readAverage(int pin) {
     long sum = 0;
@@ -29,14 +21,14 @@ int readAverage(int pin) {
  *             Bengkok Maks (ADC < 2795)  → Merah (Pin 25)
  */
 
-#define FLEX_A_PIN      34  // Pin ADC untuk Sensor Flex A
+#define FLEX_A_PIN       34  // Pin ADC untuk Sensor Flex A
 #define LED_RED_PIN      25  // LED Merah
 #define LED_YELLOW_PIN   26  // LED Kuning
 #define LED_GREEN_PIN    27  // LED Hijau
 
 // Threshold kalibrasi ADC
-#define THRESHOLD_GREEN   2910
-#define THRESHOLD_YELLOW  2795
+#define THRESHOLD_GREEN   3027
+#define THRESHOLD_YELLOW  2780
 
 unsigned long lastUpdate = 0;
 const unsigned long interval = 50; // Update LED setiap 50ms
@@ -52,7 +44,6 @@ void setup() {
     // Konfigurasi ADC
     analogReadResolution(12);
     analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
-    analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
     
     // Konfigurasi pin LED sebagai OUTPUT
     pinMode(LED_RED_PIN,    OUTPUT);
