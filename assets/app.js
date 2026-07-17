@@ -335,6 +335,19 @@ function initSimulator() {
 
   const settings = loadSettings();
 
+  // Synchronize settings between tabs (e.g. from virtual-esp32.html)
+  window.addEventListener('storage', (event) => {
+    if (event.key === SETTINGS_KEY) {
+      try {
+        Object.assign(settings, loadSettings());
+        if (typeof renderCalibrationEditors === 'function') renderCalibrationEditors();
+        if (typeof renderAudioRules === 'function') renderAudioRules();
+      } catch (e) {
+        console.error("Gagal sinkronisasi settings di tab simulator", e);
+      }
+    }
+  });
+
   // Restore saved toggle states before reading .checked
   const savedModules = loadModuleStates();
   if ('servo' in savedModules) refs.servoToggle.checked = savedModules.servo;
@@ -1326,18 +1339,25 @@ function initVirtualEsp32() {
   const flexBMinInput = $('flexBMinInput');
   const flexBMaxInput = $('flexBMaxInput');
 
-  // Load saved calibration values if any
-  try {
-    const savedCal = JSON.parse(localStorage.getItem('virtual-flex-cal'));
-    if (savedCal) {
-      if (savedCal.minA !== undefined) flexAMinInput.value = savedCal.minA;
-      if (savedCal.maxA !== undefined) flexAMaxInput.value = savedCal.maxA;
-      if (savedCal.minB !== undefined) flexBMinInput.value = savedCal.minB;
-      if (savedCal.maxB !== undefined) flexBMaxInput.value = savedCal.maxB;
+  // Load calibration values directly from settings (synchronized with simulator.html)
+  flexAMinInput.value = settings.servo.inMin;
+  flexAMaxInput.value = settings.servo.inMax;
+  flexBMinInput.value = settings.gripper.gripInMin;
+  flexBMaxInput.value = settings.gripper.gripInMax;
+
+  // Listen for settings change in other tabs
+  window.addEventListener('storage', (event) => {
+    if (event.key === SETTINGS_KEY) {
+      try {
+        Object.assign(settings, loadSettings());
+        flexAMinInput.value = settings.servo.inMin;
+        flexAMaxInput.value = settings.servo.inMax;
+        flexBMinInput.value = settings.gripper.gripInMin;
+        flexBMaxInput.value = settings.gripper.gripInMax;
+        updatePayload();
+      } catch (e) {}
     }
-  } catch (e) {
-    console.error("Gagal memuat kalibrasi virtual flex", e);
-  }
+  });
 
   espSketch.textContent = sketch;
   copySketch.addEventListener('click', async () => {
@@ -1360,10 +1380,14 @@ function initVirtualEsp32() {
     const minB = Number(flexBMinInput.value);
     const maxB = Number(flexBMaxInput.value);
 
-    // Save calibration to localStorage
-    try {
-      localStorage.setItem('virtual-flex-cal', JSON.stringify({ minA, maxA, minB, maxB }));
-    } catch (e) {}
+    // Save calibration directly to main settings
+    settings.servo.inMin = minA;
+    settings.servo.inMax = maxA;
+    settings.gripper.armInMin = minA;
+    settings.gripper.armInMax = maxA;
+    settings.gripper.gripInMin = minB;
+    settings.gripper.gripInMax = maxB;
+    saveSettings(settings);
 
     // Map percentage slider (0-100) to calibrated ADC range
     const valA = minA + (maxA - minA) * (Number(flexAInput.value) / 100);
