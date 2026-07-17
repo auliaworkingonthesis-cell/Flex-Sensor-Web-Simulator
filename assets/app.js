@@ -1039,8 +1039,11 @@ function initSimulator() {
     const overallMax = Math.max(maxA, maxB);
     const range = overallMax - overallMin || 1;
 
-    // Draw Y-axis grid lines and voltage labels (with a 45px left gutter)
+    // Draw Y-axis grid lines and labels (with a 45px gutter on both sides)
     const gutter = 45;
+    const rightGutter = 45;
+    const chartAreaWidth = rectWidth - gutter - rightGutter;
+
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 1;
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
@@ -1053,7 +1056,7 @@ function initSimulator() {
       // Grid line
       ctx.beginPath();
       ctx.moveTo(gutter, y);
-      ctx.lineTo(rectWidth, y);
+      ctx.lineTo(rectWidth - rightGutter, y);
       ctx.stroke();
 
       // Mapped ADC and Voltage values (based on 3.3V reference for 12-bit ADC)
@@ -1065,7 +1068,11 @@ function initSimulator() {
       if (i === 0) textY = y + 10;
       if (i === numGrids) textY = y - 4;
 
+      // Draw Voltage on the left
       ctx.fillText(`${voltVal.toFixed(2)}V`, 8, textY);
+
+      // Draw ADC value on the right
+      ctx.fillText(adcVal, rectWidth - rightGutter + 8, textY);
     }
 
     const drawLine = (key, color) => {
@@ -1073,7 +1080,7 @@ function initSimulator() {
       ctx.lineWidth = 3;
       ctx.beginPath();
       graph.forEach((point, index) => {
-        const x = gutter + (index / (graph.length - 1)) * (rectWidth - gutter);
+        const x = gutter + (index / (graph.length - 1)) * chartAreaWidth;
         const normalized = clamp((point[key] - overallMin) / range, 0, 1);
         const y = rectHeight - normalized * rectHeight;
         if (index === 0) ctx.moveTo(x, y);
