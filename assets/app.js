@@ -1321,6 +1321,24 @@ function initVirtualEsp32() {
   const channel = createChannel(() => { });
   const settings = loadSettings();
 
+  const flexAMinInput = $('flexAMinInput');
+  const flexAMaxInput = $('flexAMaxInput');
+  const flexBMinInput = $('flexBMinInput');
+  const flexBMaxInput = $('flexBMaxInput');
+
+  // Load saved calibration values if any
+  try {
+    const savedCal = JSON.parse(localStorage.getItem('virtual-flex-cal'));
+    if (savedCal) {
+      if (savedCal.minA !== undefined) flexAMinInput.value = savedCal.minA;
+      if (savedCal.maxA !== undefined) flexAMaxInput.value = savedCal.maxA;
+      if (savedCal.minB !== undefined) flexBMinInput.value = savedCal.minB;
+      if (savedCal.maxB !== undefined) flexBMaxInput.value = savedCal.maxB;
+    }
+  } catch (e) {
+    console.error("Gagal memuat kalibrasi virtual flex", e);
+  }
+
   espSketch.textContent = sketch;
   copySketch.addEventListener('click', async () => {
     await navigator.clipboard?.writeText(sketch);
@@ -1330,13 +1348,28 @@ function initVirtualEsp32() {
 
   virtualMdnsInput.value = normalizeMdns(localStorage.getItem(DEVICE_KEY)).replace('.local', '');
 
-  let payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), virtualMdnsInput.value, settings);
+  let payload = payloadFromFlex(2048, 0, virtualMdnsInput.value, settings);
   let lastSend = 0;
 
   function updatePayload() {
     const mdns = normalizeMdns(virtualMdnsInput.value);
     localStorage.setItem(DEVICE_KEY, mdns);
-    payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), mdns, settings);
+
+    const minA = Number(flexAMinInput.value);
+    const maxA = Number(flexAMaxInput.value);
+    const minB = Number(flexBMinInput.value);
+    const maxB = Number(flexBMaxInput.value);
+
+    // Save calibration to localStorage
+    try {
+      localStorage.setItem('virtual-flex-cal', JSON.stringify({ minA, maxA, minB, maxB }));
+    } catch (e) {}
+
+    // Map percentage slider (0-100) to calibrated ADC range
+    const valA = minA + (maxA - minA) * (Number(flexAInput.value) / 100);
+    const valB = minB + (maxB - minB) * (Number(flexBInput.value) / 100);
+
+    payload = payloadFromFlex(valA, valB, mdns, settings);
     flexARead.textContent = payload.flexA;
     flexBRead.textContent = payload.flexB;
     fpsRead.textContent = `${fpsInput.value} FPS`;
@@ -1348,13 +1381,13 @@ function initVirtualEsp32() {
     channel.send(payload);
   }
 
-  [flexAInput, flexBInput, fpsInput, virtualMdnsInput].forEach((input) => {
+  [flexAInput, flexBInput, fpsInput, virtualMdnsInput, flexAMinInput, flexAMaxInput, flexBMinInput, flexBMaxInput].forEach((input) => {
     input.addEventListener('input', sendNow);
   });
 
   centerInputs.addEventListener('click', () => {
-    flexAInput.value = 2048;
-    flexBInput.value = 0;
+    flexAInput.value = 50; // Center is 50%
+    flexBInput.value = 0;  // Open is 0%
     sendNow();
   });
 
