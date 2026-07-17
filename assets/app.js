@@ -1014,23 +1014,52 @@ function initSimulator() {
     ctx.fillStyle = '#08090a';
     ctx.fillRect(0, 0, width, height);
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    const minA = numeric(settings.audio.graphMinA, 2800);
+    const maxA = numeric(settings.audio.graphMaxA, 3040);
+    const minB = numeric(settings.audio.graphMinB, 2270);
+    const maxB = numeric(settings.audio.graphMaxB, 2800);
+
+    // Dynamic vertical scaling matching both sensors' limits
+    const overallMin = Math.min(minA, minB);
+    const overallMax = Math.max(maxA, maxB);
+    const range = overallMax - overallMin || 1;
+
+    // Draw Y-axis grid lines and voltage labels (with a 45px left gutter)
+    const gutter = 45;
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 1;
-    for (let i = 1; i < 4; i += 1) {
-      const y = (height / 4) * i;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px Inter, system-ui, sans-serif';
+
+    const numGrids = 4;
+    for (let i = 0; i <= numGrids; i++) {
+      const y = (height / numGrids) * i;
+      
+      // Grid line
       ctx.beginPath();
-      ctx.moveTo(0, y);
+      ctx.moveTo(gutter, y);
       ctx.lineTo(width, y);
       ctx.stroke();
+
+      // Mapped ADC and Voltage values (based on 3.3V reference for 12-bit ADC)
+      const ratio = 1 - (i / numGrids);
+      const adcVal = Math.round(overallMin + range * ratio);
+      const voltVal = (adcVal / 4095) * 3.3;
+
+      let textY = y + 4;
+      if (i === 0) textY = y + 10;
+      if (i === numGrids) textY = y - 4;
+
+      ctx.fillText(`${voltVal.toFixed(2)}V`, 8, textY);
     }
 
-    const drawLine = (key, color, minVal, maxVal) => {
+    const drawLine = (key, color) => {
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
       ctx.beginPath();
       graph.forEach((point, index) => {
-        const x = (index / (graph.length - 1)) * width;
-        const normalized = clamp((point[key] - minVal) / (maxVal - minVal || 1), 0, 1);
+        const x = gutter + (index / (graph.length - 1)) * (width - gutter);
+        const normalized = clamp((point[key] - overallMin) / range, 0, 1);
         const y = height - normalized * height;
         if (index === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
@@ -1038,17 +1067,14 @@ function initSimulator() {
       ctx.stroke();
     };
 
-    const minA = numeric(settings.audio.graphMinA, 2800);
-    const maxA = numeric(settings.audio.graphMaxA, 3040);
-    const minB = numeric(settings.audio.graphMinB, 2270);
-    const maxB = numeric(settings.audio.graphMaxB, 2800);
+    drawLine('flexA', '#3b82f6');
+    drawLine('flexB', '#79e39f');
 
-    drawLine('flexA', '#3b82f6', minA, maxA);
-    drawLine('flexB', '#79e39f', minB, maxB);
+    // Draw legends
     ctx.fillStyle = '#8e959d';
     ctx.font = '12px Inter, system-ui, sans-serif';
-    ctx.fillText('Flex A', 12, 20);
-    ctx.fillText('Flex B', 72, 20);
+    ctx.fillText('Flex A', gutter + 12, 20);
+    ctx.fillText('Flex B', gutter + 72, 20);
   }
 
   function draw(time) {
