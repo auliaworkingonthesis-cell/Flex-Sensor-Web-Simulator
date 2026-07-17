@@ -1008,16 +1008,26 @@ function initSimulator() {
   });
 
   function drawChart() {
-    // Match drawing buffer to CSS size dynamically to prevent stretching/distortion
-    const width = refs.chart.clientWidth || 640;
-    const height = refs.chart.clientHeight || 260;
+    // Match drawing buffer to physical pixels for High-DPI screens to prevent blurriness and distortion
+    const dpr = window.devicePixelRatio || 1;
+    const rectWidth = refs.chart.clientWidth || 640;
+    const rectHeight = refs.chart.clientHeight || 260;
+    
+    const width = rectWidth * dpr;
+    const height = rectHeight * dpr;
+
     if (refs.chart.width !== width || refs.chart.height !== height) {
       refs.chart.width = width;
       refs.chart.height = height;
     }
+    
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = '#08090a';
     ctx.fillRect(0, 0, width, height);
+
+    // Scale drawing context to support High-DPI screens
+    ctx.save();
+    ctx.scale(dpr, dpr);
 
     const minA = numeric(settings.audio.graphMinA, 2800);
     const maxA = numeric(settings.audio.graphMaxA, 3040);
@@ -1038,12 +1048,12 @@ function initSimulator() {
 
     const numGrids = 4;
     for (let i = 0; i <= numGrids; i++) {
-      const y = (height / numGrids) * i;
+      const y = (rectHeight / numGrids) * i;
       
       // Grid line
       ctx.beginPath();
       ctx.moveTo(gutter, y);
-      ctx.lineTo(width, y);
+      ctx.lineTo(rectWidth, y);
       ctx.stroke();
 
       // Mapped ADC and Voltage values (based on 3.3V reference for 12-bit ADC)
@@ -1063,9 +1073,9 @@ function initSimulator() {
       ctx.lineWidth = 3;
       ctx.beginPath();
       graph.forEach((point, index) => {
-        const x = gutter + (index / (graph.length - 1)) * (width - gutter);
+        const x = gutter + (index / (graph.length - 1)) * (rectWidth - gutter);
         const normalized = clamp((point[key] - overallMin) / range, 0, 1);
-        const y = height - normalized * height;
+        const y = rectHeight - normalized * rectHeight;
         if (index === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
@@ -1075,11 +1085,26 @@ function initSimulator() {
     drawLine('flexA', '#3b82f6');
     drawLine('flexB', '#79e39f');
 
-    // Draw legends
+    // Draw legends with color indicators
+    // Flex A Indicator (Blue)
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.arc(gutter + 18, 15, 4, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#8e959d';
-    ctx.font = '12px Inter, system-ui, sans-serif';
-    ctx.fillText('Flex A', gutter + 12, 20);
-    ctx.fillText('Flex B', gutter + 72, 20);
+    ctx.font = '11px Inter, system-ui, sans-serif';
+    ctx.fillText('Flex A', gutter + 28, 19);
+
+    // Flex B Indicator (Green)
+    ctx.fillStyle = '#79e39f';
+    ctx.beginPath();
+    ctx.arc(gutter + 88, 15, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#8e959d';
+    ctx.fillText('Flex B', gutter + 98, 19);
+
+    // Restore context scaling
+    ctx.restore();
   }
 
   function draw(time) {
