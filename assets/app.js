@@ -1008,8 +1008,13 @@ function initSimulator() {
   });
 
   function drawChart() {
-    const width = refs.chart.width;
-    const height = refs.chart.height;
+    // Match drawing buffer to CSS size dynamically to prevent stretching/distortion
+    const width = refs.chart.clientWidth || 640;
+    const height = refs.chart.clientHeight || 260;
+    if (refs.chart.width !== width || refs.chart.height !== height) {
+      refs.chart.width = width;
+      refs.chart.height = height;
+    }
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = '#08090a';
     ctx.fillRect(0, 0, width, height);
