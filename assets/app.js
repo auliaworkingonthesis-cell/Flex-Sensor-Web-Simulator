@@ -1389,9 +1389,29 @@ function initVirtualEsp32() {
     settings.gripper.gripInMax = maxB;
     saveSettings(settings);
 
-    // Map percentage slider (0-100) to calibrated ADC range
-    const valA = minA + (maxA - minA) * (Number(flexAInput.value) / 100);
-    const valB = minB + (maxB - minB) * (Number(flexBInput.value) / 100);
+    // Update HTML range slider bounds dynamically based on entered min/max
+    const sliderMinA = Math.min(minA, maxA);
+    const sliderMaxA = Math.max(minA, maxA);
+    const sliderMinB = Math.min(minB, maxB);
+    const sliderMaxB = Math.max(minB, maxB);
+
+    if (flexAInput.min !== String(sliderMinA) || flexAInput.max !== String(sliderMaxA)) {
+      const prevVal = Number(flexAInput.value);
+      flexAInput.min = sliderMinA;
+      flexAInput.max = sliderMaxA;
+      // Keep value bounded
+      flexAInput.value = clamp(prevVal, sliderMinA, sliderMaxA);
+    }
+    if (flexBInput.min !== String(sliderMinB) || flexBInput.max !== String(sliderMaxB)) {
+      const prevVal = Number(flexBInput.value);
+      flexBInput.min = sliderMinB;
+      flexBInput.max = sliderMaxB;
+      // Keep value bounded
+      flexBInput.value = clamp(prevVal, sliderMinB, sliderMaxB);
+    }
+
+    const valA = Number(flexAInput.value);
+    const valB = Number(flexBInput.value);
 
     payload = payloadFromFlex(valA, valB, mdns, settings);
     flexARead.textContent = payload.flexA;
@@ -1410,8 +1430,8 @@ function initVirtualEsp32() {
   });
 
   centerInputs.addEventListener('click', () => {
-    flexAInput.value = 50; // Center is 50%
-    flexBInput.value = 0;  // Open is 0%
+    flexAInput.value = Math.round((Number(flexAMinInput.value) + Number(flexAMaxInput.value)) / 2);
+    flexBInput.value = Number(flexBMinInput.value);
     sendNow();
   });
 
