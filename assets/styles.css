@@ -153,6 +153,11 @@ input {
 .header-readout strong {
   color: #d8dde3;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 175px;
+  display: inline-block;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .topnav {
