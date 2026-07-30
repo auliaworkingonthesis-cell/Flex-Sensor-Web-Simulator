@@ -1119,7 +1119,9 @@ function initSimulator() {
     current.flexB = target.flexB;
     refs.flexA.textContent = current.flexA;
     refs.flexB.textContent = current.flexB;
-    refs.headerFlex.textContent = `Flex A ${current.flexA} - Flex B ${current.flexB}`;
+    if (refs.headerFlex) {
+      refs.headerFlex.textContent = `Flex A ${current.flexA} - Flex B ${current.flexB}`;
+    }
     refs.servoFlex.textContent = current[settings.servo.source] ?? current.flexA;
 
     current.servo = target.servo;

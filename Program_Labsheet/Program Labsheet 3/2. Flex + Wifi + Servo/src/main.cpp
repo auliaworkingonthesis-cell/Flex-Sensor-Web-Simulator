@@ -23,7 +23,7 @@
 
 // ── PILIH SENSOR YANG DIGUNAKAN ──────────────────────────────────────────────
 #define USE_FLEX_A              // Aktifkan Sensor Flex A (Pan + Servo)
-#define USE_FLEX_B           // Non-aktif: aktifkan jika Flex B disambungkan
+// #define USE_FLEX_B           // Non-aktif: hapus komentar jika Flex B disambungkan
 
 // ── PIN HARDWARE ─────────────────────────────────────────────────────────────
 #define FLEX_A_PIN       34     // Pin ADC Sensor Flex A
