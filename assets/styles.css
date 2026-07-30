@@ -194,7 +194,7 @@ input {
   display: grid;
   align-content: center;
   gap: 24px;
-  width: min(1080px, calc(100% - 28px));
+  width: min(1360px, calc(100% - 28px));
   min-height: 100vh;
   margin: 0 auto;
   padding: 32px 0;
@@ -274,6 +274,7 @@ h1 {
   margin: 8px 0 0;
   line-height: 1.45;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .kit-shell {
